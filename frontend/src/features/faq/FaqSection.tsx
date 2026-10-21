@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, ChevronDown } from 'lucide-react';
-import { faqs } from '../../shared/site-content.js';
 import { requestJson } from '../../shared/api-client.js';
+import { usePublicContact } from '../../shared/use-public-contact.js';
 
 type Faq = { question: string; answer: string };
 
 export default function FaqSection() {
-  const [items, setItems] = useState(faqs.map(([question, answer]) => [question, answer]));
+  const [items, setItems] = useState<[string, string][]>([]);
+  const { email } = usePublicContact();
   useEffect(() => {
     requestJson<Faq[]>('/api/public/faqs')
       .then((data: Faq[]) => {
@@ -23,9 +24,11 @@ export default function FaqSection() {
           <br />
           <em>questions.</em>
         </h2>
-        <a className="text-link" href="mailto:yanmane29@gmail.com">
-          Vous avez une autre question ? <ArrowUpRight size={15} />
-        </a>
+        {email && (
+          <a className="text-link" href={`mailto:${email}`}>
+            Vous avez une autre question ? <ArrowUpRight size={15} />
+          </a>
+        )}
       </div>
       <div className="faq-list">
         {items.map(([q, a], i) => (

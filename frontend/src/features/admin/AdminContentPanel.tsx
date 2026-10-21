@@ -268,7 +268,11 @@ export default function AdminContentPanel({ api, onError }: Props) {
           ) : (
             <label className="field admin-content-json">
               <span>
-                Contenu JSON · utilisez « title » et « description » pour l’afficher sur le site
+                {selectedKey === 'services'
+                  ? 'Catalogue publié : modifiez les fiches d’accompagnement en conservant le tableau « items ».'
+                  : selectedKey === 'questionnaires'
+                    ? 'Questionnaires publiés : modifiez les étapes et les questions sous « items ».'
+                    : 'Contenu JSON enregistré dans la base et visible après publication.'}
               </span>
               <textarea
                 value={jsonDraft}

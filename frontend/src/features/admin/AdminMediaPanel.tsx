@@ -3,7 +3,7 @@ import { ImagePlus, Trash2, Upload } from 'lucide-react';
 import { API } from '../../shared/site-content.js';
 import { requestJson } from '../../shared/api-client.js';
 import type { AdminApi } from '../../shared/api-client.js';
-import { services } from '../../shared/service-catalog.js';
+import { useServiceCatalog } from '../../shared/service-catalog.js';
 
 type MediaItem = {
   id: string;
@@ -20,10 +20,11 @@ type Props = { api: AdminApi; onError: (message: string) => void };
 export default function AdminMediaPanel({ api, onError }: Props) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [file, setFile] = useState<File | null>(null);
-  const [service, setService] = useState('YAA COACHING');
+  const [service, setService] = useState('');
   const [alt, setAlt] = useState('');
   const [caption, setCaption] = useState('');
   const [busy, setBusy] = useState(false);
+  const services = useServiceCatalog();
 
   const load = useCallback(async () => {
     const result: MediaItem[] = await api('/api/admin/media');
@@ -134,7 +135,8 @@ export default function AdminMediaPanel({ api, onError }: Props) {
         </label>
         <label className="field">
           <span>Accompagnement</span>
-          <select value={service} onChange={(event) => setService(event.target.value)}>
+          <select value={service} onChange={(event) => setService(event.target.value)} required>
+            <option value="">Choisissez un accompagnement</option>
             {services.map((item) => (
               <option key={item.name} value={item.name}>
                 {item.name}
@@ -161,7 +163,7 @@ export default function AdminMediaPanel({ api, onError }: Props) {
             maxLength={500}
           />
         </label>
-        <button className="button button-dark" disabled={busy || !file}>
+        <button className="button button-dark" disabled={busy || !file || !service}>
           <Upload size={15} /> {busy ? 'Téléversement…' : 'Téléverser en brouillon'}
         </button>
       </form>

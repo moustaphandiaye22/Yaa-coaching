@@ -2,9 +2,17 @@ import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ShieldCheck } from 'lucide-
 import type { Question } from '../../shared/site-content.js';
 import { useQuestionnaireFlow } from './useQuestionnaireFlow.js';
 
-type Props = { initialSituation: string; onNotice: (message: string) => void };
+type Props = {
+  initialSituation: string;
+  initialService: string;
+  onNotice: (message: string) => void;
+};
 
-export default function QuestionnaireSection({ initialSituation, onNotice }: Props) {
+export default function QuestionnaireSection({
+  initialSituation,
+  initialService,
+  onNotice,
+}: Props) {
   const {
     step,
     setStep,
@@ -17,12 +25,15 @@ export default function QuestionnaireSection({ initialSituation, onNotice }: Pro
     activeQuestionnaire,
     currentQuestions,
     titles,
+    questionnaireTitle,
+    questionnaireIntroduction,
+    questionnaireNotices,
     update,
     visibleQuestions,
     questionIsRequired,
     continueToNextStep,
     submitIfValid,
-  } = useQuestionnaireFlow(initialSituation, onNotice);
+  } = useQuestionnaireFlow(initialSituation, initialService, onNotice);
 
   function field(question: Question) {
     const value = answers[question.key] ?? '';
@@ -117,22 +128,14 @@ export default function QuestionnaireSection({ initialSituation, onNotice }: Pro
       <div className="questionnaire-heading">
         <div>
           <p className="eyebrow">YAA COACHING · ACCOMPAGNEMENT PHYSIQUE & MENTAL</p>
-          <h2>
-            Mon entretien
-            <br />
-            <em>découverte.</em>
-          </h2>
+          <h2>{questionnaireTitle}</h2>
         </div>
         <div>
           <p className="eyebrow">UN PREMIER ÉCHANGE</p>
-          <p>
-            Vos besoins physiques et mentaux, vos envies, vos difficultés et votre rythme :
-            construisons un point de départ qui vous ressemble.
-          </p>
-          <p>
-            Les modalités et le tarif sont abordés lors de cet échange. Évitez de transmettre des
-            informations médicales.
-          </p>
+          <p>{questionnaireIntroduction}</p>
+          {questionnaireNotices.map((notice) => (
+            <p key={notice}>{notice}</p>
+          ))}
         </div>
       </div>
       <div className="questionnaire-layout">

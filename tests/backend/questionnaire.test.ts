@@ -1,7 +1,5 @@
-import {
-  getQuestionnaire,
-  isServiceName,
-} from '../../backend/src/modules/questionnaire/domain/questionnaire.js';
+import { getQuestionnaire } from '../../backend/prisma/default-questionnaires.js';
+import { isServiceName } from '../../backend/src/modules/questionnaire/domain/questionnaire.js';
 
 describe('questionnaire public contract', () => {
   it.each(['YAA COACHING', 'YAA PLAYER', 'YAA AUTONOMIE'] as const)(

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, MessageCircle, Star } from 'lucide-react';
 import { ApiError, requestJson } from '../../shared/api-client.js';
-import { services } from '../../shared/service-catalog.js';
+import { useServiceCatalog } from '../../shared/service-catalog.js';
+import { usePublicContact } from '../../shared/use-public-contact.js';
 
 type Review = { id: string; pseudonym: string; service: string; rating: number; message: string };
 type Props = { onNotice: (message: string) => void };
@@ -10,6 +11,8 @@ export default function ReviewsSection({ onNotice }: Props) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [sending, setSending] = useState(false);
+  const services = useServiceCatalog();
+  const { email } = usePublicContact();
   useEffect(() => {
     requestJson<Review[]>('/api/public/reviews')
       .then((data) => setReviews(Array.isArray(data) ? data : []))
@@ -142,7 +145,7 @@ export default function ReviewsSection({ onNotice }: Props) {
                 <span>
                   J’accepte que mon avis, mon prénom ou pseudonyme et ma note soient publiés après
                   validation. Je peux demander leur retrait à{' '}
-                  <a href="mailto:yanmane29@gmail.com">yanmane29@gmail.com</a>.
+                  {email ? <a href={`mailto:${email}`}>{email}</a> : 'l’équipe YAA COACHING'}.
                 </span>
               </label>
             </div>

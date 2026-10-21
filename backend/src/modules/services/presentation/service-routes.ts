@@ -1,5 +1,17 @@
 import { Router } from 'express';
-import { services } from '../domain/service-catalog.js';
+import { asyncHandler } from '../../../shared/http/async-handler.js';
+import type { ManageContent } from '../../content/application/manage-content.js';
 
-export const serviceRouter = Router();
-serviceRouter.get('/', (_request, response) => response.json(services));
+export function createServiceRouter(content: ManageContent) {
+  const router = Router();
+  router.get(
+    '/',
+    asyncHandler(async (_request, response) => {
+      const block = (await content.findPublic('services')) as {
+        content?: { items?: unknown };
+      } | null;
+      response.json(Array.isArray(block?.content?.items) ? block.content.items : []);
+    }),
+  );
+  return router;
+}

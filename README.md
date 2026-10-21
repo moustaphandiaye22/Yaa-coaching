@@ -1,6 +1,6 @@
 # YAA COACHING
 
-Application de présentation, questionnaire de découverte, avis modérés et administration.
+Application web de coaching : espace public, questionnaire de découverte, avis modérés et administration.
 
 ## Organisation du code
 
@@ -46,7 +46,9 @@ npm run data:encrypt-existing --workspace backend
 
 Elle est idempotente et doit utiliser la même `DATA_ENCRYPTION_KEY` que le serveur.
 
-Le site est disponible sur `http://localhost:5173`, l’API sur `http://localhost:3000` et l’administration sur `http://localhost:5173/admin`. Le seed crée ou réactive le compte `ADMIN` défini par `ADMIN_EMAIL` sans remplacer son mot de passe s’il existe déjà, puis ajoute les FAQ initiales manquantes. Il peut être exécuté de nouveau sans dupliquer le compte ni les FAQ.
+Le site est disponible sur `http://localhost:5173`, l’API sur `http://localhost:3000` et l’administration sur `http://localhost:5173/admin` (lien « Connexion » dans le menu). Le seed crée ou réactive le compte `ADMIN` défini par `ADMIN_EMAIL` sans remplacer son mot de passe s’il existe déjà, puis initialise les FAQ, l’accueil, le catalogue des accompagnements et les questionnaires dans `ContentBlock`. Il peut être exécuté de nouveau sans écraser les contenus déjà administrés.
+
+Les contenus publiés sont modifiables depuis **Administration → Contenus** (blocs `hero`, `services`, `questionnaires`, `methode`, `player`, `coach`, `zones`, `contacts` et `closing`; les blocs JSON s’éditent dans l’éditeur prévu). Le catalogue et les questions sont chargés depuis PostgreSQL; les demandes, avis, médias et FAQ sont également lus ou enregistrés via l’API et PostgreSQL. Les trois noms techniques de service restent des identifiants métier validés côté serveur.
 
 ### Docker Compose
 

@@ -1,6 +1,9 @@
 import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import argon2 from 'argon2';
+import { services } from './default-services.js';
+import { getQuestionnaire } from './default-questionnaires.js';
+import { publicContentDefaults } from './default-public-content.js';
 
 const prisma = new PrismaClient();
 
@@ -75,13 +78,130 @@ async function seedFaqs() {
   return createdCount;
 }
 
+function mergeMissingValues(existing: unknown, defaults: unknown): unknown {
+  if (existing === undefined) return defaults;
+  if (Array.isArray(existing) && Array.isArray(defaults)) {
+    return defaults.map((value, index) => mergeMissingValues(existing[index], value));
+  }
+  if (
+    existing &&
+    defaults &&
+    typeof existing === 'object' &&
+    typeof defaults === 'object' &&
+    !Array.isArray(existing) &&
+    !Array.isArray(defaults)
+  ) {
+    const current = existing as Record<string, unknown>;
+    const initial = defaults as Record<string, unknown>;
+    return {
+      ...current,
+      ...Object.fromEntries(
+        Object.entries(initial).map(([key, value]) => [
+          key,
+          mergeMissingValues(current[key], value),
+        ]),
+      ),
+    };
+  }
+  return existing;
+}
+
+async function seedPublishedContent() {
+  const defaults = [
+    {
+      key: 'hero',
+      content: {
+        eyebrow: 'COACHING · FOOTBALL · AUTONOMIE',
+        title: 'Accompagnement physique & mental.',
+        accent: 'À votre rythme.',
+        description:
+          'Accompagner, c’est cheminer à vos côtés en tenant compte de vos besoins. Que vous soyez sportif ou non, commencez à vous stimuler ou reprenez une activité adaptée à vos capacités, à vos besoins et à votre rythme.',
+        location: 'YAA COACHING à Vierzon et alentours ; YAA PLAYER sans limite géographique.',
+        buttonLabel: 'Trouver mon accompagnement',
+      },
+    },
+    {
+      key: 'services',
+      content: {
+        section: {
+          eyebrow: 'UN ACCOMPAGNEMENT QUI VOUS RESSEMBLE',
+          title: 'Trois portes.',
+          accent: 'Un même élan.',
+          introduction:
+            'Pas besoin d’être sportif pour commencer. Votre point de départ, vos capacités et vos besoins guident chaque étape de l’accompagnement.',
+        },
+        items: services,
+      },
+    },
+    {
+      key: 'questionnaires',
+      content: {
+        items: Object.fromEntries(services.map(({ name }) => [name, getQuestionnaire(name)])),
+      },
+    },
+    ...publicContentDefaults,
+  ];
+
+  for (const { key, content } of defaults) {
+    const json = content as Prisma.InputJsonObject;
+    const existing = await prisma.contentBlock.findUnique({ where: { key } });
+    if (!existing) {
+      await prisma.contentBlock.create({
+        data: {
+          key,
+          content: json,
+          publishedContent: json,
+          publishedAt: new Date(),
+        },
+      });
+      continue;
+    }
+
+    const nextContent = mergeMissingValues(existing.content, json) as Prisma.InputJsonObject;
+    const nextPublished = existing.publishedAt
+      ? (mergeMissingValues(existing.publishedContent, json) as Prisma.InputJsonObject)
+      : null;
+    const hasChanges =
+      JSON.stringify(nextContent) !== JSON.stringify(existing.content) ||
+      (nextPublished !== null &&
+        JSON.stringify(nextPublished) !== JSON.stringify(existing.publishedContent));
+    if (!hasChanges) continue;
+
+    await prisma.$transaction(async (transaction) => {
+      const block = await transaction.contentBlock.update({
+        where: { key },
+        data: {
+          content: nextContent,
+          ...(nextPublished ? { publishedContent: nextPublished } : {}),
+          revision: { increment: 1 },
+        },
+      });
+      await transaction.contentRevision.create({
+        data: {
+          contentBlockId: block.id,
+          revision: block.revision,
+          content: nextContent,
+        },
+      });
+      await transaction.auditLog.create({
+        data: {
+          action: 'CONTENT_DEFAULTS_MERGED',
+          entity: 'ContentBlock',
+          entityId: block.id,
+        },
+      });
+    });
+  }
+}
+
 async function main() {
   const { email, password } = getAdminCredentials();
 
   await seedAdmin(email, password);
   const createdFaqs = await seedFaqs();
+  await seedPublishedContent();
 
-  console.info('Seed terminé : compte administrateur prêt et FAQ initialisées.');
+  console.info('Seed terminé : compte administrateur, contenus du site et FAQ initialisés.');
   console.info(`FAQ ajoutées : ${createdFaqs}.`);
 }
 

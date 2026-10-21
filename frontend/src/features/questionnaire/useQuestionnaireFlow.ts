@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react';
 import type { Answers, Question, Service } from '../../shared/site-content.js';
 import { ApiError, requestJson } from '../../shared/api-client.js';
+import { useServiceCatalog } from '../../shared/service-catalog.js';
 
-type Questionnaire = { service: Service; titles: string[]; steps: Question[][] };
+type Questionnaire = {
+  service: Service;
+  title: string;
+  introduction: string;
+  notices: string[];
+  titles: string[];
+  steps: Question[][];
+};
 
 export function useQuestionnaireFlow(
   initialSituation: string,
+  initialService: string,
   onNotice: (message: string) => void,
 ) {
   const [step, setStep] = useState(0);
@@ -14,12 +23,15 @@ export function useQuestionnaireFlow(
   const [questionnaire, setQuestionnaire] = useState<Questionnaire | null>(null);
   const [questionnaireError, setQuestionnaireError] = useState(false);
   const [questionnaireReload, setQuestionnaireReload] = useState(0);
+  const serviceCatalog = useServiceCatalog();
   const situation = String(answers.situation ?? '');
-  const service: Service = situation.startsWith('Être accompagné')
-    ? 'YAA PLAYER'
-    : situation.startsWith('Préserver')
-      ? 'YAA AUTONOMIE'
-      : 'YAA COACHING';
+  const matchedService = serviceCatalog.find(
+    (item) =>
+      Array.isArray(item.questionnaireSituations) &&
+      item.questionnaireSituations.includes(situation),
+  )?.name;
+  const service: Service =
+    matchedService ?? (initialService as Service) ?? serviceCatalog[0]?.name ?? 'YAA COACHING';
   const isMinor = answers.age === 'Moins de 18 ans';
   const activeQuestionnaire = questionnaire?.service === service ? questionnaire : null;
   const currentQuestions = activeQuestionnaire?.steps[step] ?? [];
@@ -32,14 +44,21 @@ export function useQuestionnaireFlow(
 
   useEffect(() => {
     const controller = new AbortController();
-    requestJson<{ steps?: { title: string; questions: Question[] }[] }>(
-      `/api/public/questionnaire?service=${encodeURIComponent(service)}`,
-      { signal: controller.signal },
-    )
+    requestJson<{
+      title?: string;
+      introduction?: string;
+      notices?: string[];
+      steps?: { title: string; questions: Question[] }[];
+    }>(`/api/public/questionnaire?service=${encodeURIComponent(service)}`, {
+      signal: controller.signal,
+    })
       .then((result) => {
         if (!Array.isArray(result.steps) || result.steps.length !== 5) return;
         setQuestionnaire({
           service,
+          title: result.title ?? '',
+          introduction: result.introduction ?? '',
+          notices: Array.isArray(result.notices) ? result.notices : [],
           titles: result.steps.map((item) => item.title),
           steps: result.steps.map((item) => item.questions),
         });
@@ -169,6 +188,9 @@ export function useQuestionnaireFlow(
     activeQuestionnaire,
     currentQuestions,
     titles: activeQuestionnaire?.titles ?? [],
+    questionnaireTitle: activeQuestionnaire?.title ?? '',
+    questionnaireIntroduction: activeQuestionnaire?.introduction ?? '',
+    questionnaireNotices: activeQuestionnaire?.notices ?? [],
     update,
     visibleQuestions,
     questionIsRequired,

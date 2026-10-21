@@ -14,6 +14,13 @@ export class PrismaContentRepository implements ContentRepository {
       content: publishedContent,
     }));
   }
+  async findPublic(key: string) {
+    const block = await this.prisma.contentBlock.findFirst({
+      where: { key, publishedAt: { not: null }, publishedContent: { not: Prisma.DbNull } },
+      select: { key: true, publishedContent: true, revision: true, publishedAt: true },
+    });
+    return block ? { ...block, content: block.publishedContent } : null;
+  }
   listAdmin() {
     return this.prisma.contentBlock.findMany({ orderBy: { key: 'asc' } });
   }

@@ -6,6 +6,9 @@ export class ManageContent {
   listPublic() {
     return this.contents.listPublic();
   }
+  findPublic(key: string) {
+    return this.contents.findPublic(key);
+  }
   listAdmin() {
     return this.contents.listAdmin();
   }

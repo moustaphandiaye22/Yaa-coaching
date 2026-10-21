@@ -1,9 +1,13 @@
 import { ArrowUpRight } from 'lucide-react';
+import { usePublicContact } from '../use-public-contact.js';
 
 export default function SiteFooter() {
+  const { email, phone, phoneLink, footerCoaching, footerPlayer, footerSignature } =
+    usePublicContact();
+
   return (
     <footer className="site-footer">
-      <a className="brand footer-brand" href="#top">
+      <a className="brand footer-brand" href="/">
         <span className="brand-mark">Y</span>
         <span>
           <b>YAA COACHING</b>
@@ -11,21 +15,25 @@ export default function SiteFooter() {
         </span>
       </a>
       <div>
-        <p>Coaching & autonomie : Vierzon et alentours.</p>
-        <p>Player : sans limite géographique.</p>
+        <p>{footerCoaching}</p>
+        <p>{footerPlayer}</p>
       </div>
       <div className="footer-contact">
-        <a href="mailto:yanmane29@gmail.com">
-          yanmane29@gmail.com <ArrowUpRight size={14} />
-        </a>
-        <a href="tel:+33652281155">
-          06 52 28 11 55 <ArrowUpRight size={14} />
-        </a>
+        {email && (
+          <a href={`mailto:${email}`}>
+            {email} <ArrowUpRight size={14} />
+          </a>
+        )}
+        {phone && phoneLink && (
+          <a href={`tel:${phoneLink}`}>
+            {phone} <ArrowUpRight size={14} />
+          </a>
+        )}
       </div>
       <div className="footer-bottom">
-        <span>© 2026 YAA COACHING</span>
-        <a href="mailto:yanmane29@gmail.com?subject=Demande%20RGPD">Données personnelles</a>
-        <span>FAIT AVEC ÉCOUTE · À VIERZON</span>
+        <span>© {new Date().getFullYear()} YAA COACHING</span>
+        {email && <a href={`mailto:${email}?subject=Demande%20RGPD`}>Données personnelles</a>}
+        <span>{footerSignature}</span>
       </div>
     </footer>
   );

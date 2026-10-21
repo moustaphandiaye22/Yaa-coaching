@@ -126,26 +126,29 @@ function Admin({ onNavigate }: AdminProps) {
           </span>
         </a>
         <div className="admin-menu-label">GESTION</div>
-        {[
-          ['demandes', '◌', 'Demandes', counts.NEW],
-          ['avis', '☆', 'Avis', counts.PENDING],
-          ['faq', '?', 'Questions fréquentes', null],
-          ['contenu', '▤', 'Contenus', null],
-          ['medias', '▧', 'Médias', null],
-          ['comptes', '♙', 'Comptes', null],
-          ['journal', '◷', 'Journal', null],
-          ['notifications', '✉', 'Notifications', null],
-        ].map(([id, icon, label, count]) => (
-          <button
-            key={String(id)}
-            className={`admin-menu-item ${tab === id ? 'active' : ''}`}
-            onClick={() => setTab(String(id))}
-          >
-            <span>{icon}</span>
-            {label}
-            {count ? <i>{count}</i> : null}
-          </button>
-        ))}
+        <nav className="admin-menu" aria-label="Navigation administration">
+          {[
+            ['demandes', '◌', 'Demandes', counts.NEW],
+            ['avis', '☆', 'Avis', counts.PENDING],
+            ['faq', '?', 'Questions fréquentes', null],
+            ['contenu', '▤', 'Contenus', null],
+            ['medias', '▧', 'Médias', null],
+            ['comptes', '♙', 'Comptes', null],
+            ['journal', '◷', 'Journal', null],
+            ['notifications', '✉', 'Notifications', null],
+          ].map(([id, icon, label, count]) => (
+            <button
+              key={String(id)}
+              className={`admin-menu-item ${tab === id ? 'active' : ''}`}
+              aria-current={tab === id ? 'page' : undefined}
+              onClick={() => setTab(String(id))}
+            >
+              <span>{icon}</span>
+              {label}
+              {count ? <i>{count}</i> : null}
+            </button>
+          ))}
+        </nav>
         <div className="admin-sidebar-bottom">
           <div className="admin-user">
             <span>Y</span>

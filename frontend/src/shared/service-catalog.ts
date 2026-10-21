@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
+import { requestJson } from './api-client.js';
 import type { Service } from './site-content.js';
 
-export const services: {
+export type ServiceData = {
   name: Service;
   slug: string;
   tag: string;
@@ -11,41 +13,48 @@ export const services: {
   alt: string;
   accent: string;
   link: string;
-}[] = [
-  {
-    name: 'YAA COACHING',
-    slug: 'coaching',
-    tag: 'PHYSIQUE & MENTAL',
-    heading: 'Reprendre une activité à votre rythme',
-    body: 'Retrouver des possibilités d’action à votre rythme, sans mesurer votre valeur à vos performances. Sportif ou non, bénéficiez d’un accompagnement physique et mental adapté à vos capacités et à vos besoins, à Vierzon et alentours.',
-    zone: 'Vierzon et alentours',
-    image: 'coaching.jpg',
-    alt: 'Un coach à l’écoute d’une personne accompagnée, lors d’un échange dans un parc.',
-    accent: 'sage',
-    link: 'Retrouver mon élan',
-  },
-  {
-    name: 'YAA PLAYER',
-    slug: 'player',
-    tag: 'JEUNE FOOTBALLEUR',
-    heading: 'Ton potentiel mérite de s’exprimer.',
-    body: 'Tu veux franchir un cap, gagner en confiance et mieux exprimer tes qualités sur le terrain ? Un accompagnement individuel pour avancer avec un cap qui te ressemble.',
-    zone: 'Sans limite géographique',
-    image: 'player.jpg',
-    alt: 'Un jeune footballeur échange avec un coach à son écoute au bord du terrain.',
-    accent: 'ochre',
-    link: 'Progresser au football',
-  },
-  {
-    name: 'YAA AUTONOMIE',
-    slug: 'autonomie',
-    tag: 'À DOMICILE',
-    heading: 'Cultiver l’autonomie, garder le lien.',
-    body: 'Un accompagnement à domicile pour stimuler, rassurer et garder le lien au quotidien. Chaque proposition respecte les envies, le rythme et les possibilités de la personne.',
-    zone: 'Vierzon et alentours',
-    image: 'autonomie.jpg',
-    alt: 'Une personne âgée réalise un mouvement doux assis avec un coach attentif à ses côtés.',
-    accent: 'plum',
-    link: 'Préserver l’autonomie',
-  },
-];
+  questionnaireSituations: string[];
+};
+
+type ServiceRecord = {
+  name: Service;
+  slug: string;
+  type: string;
+  title: string;
+  description: string;
+  zone: string;
+  image: string;
+  alt: string;
+  accent: string;
+  link: string;
+  questionnaireSituations: string[];
+};
+
+export function useServiceCatalog() {
+  const [services, setServices] = useState<ServiceData[]>([]);
+
+  useEffect(() => {
+    requestJson<ServiceRecord[]>('/api/public/services')
+      .then((records) => {
+        if (!Array.isArray(records)) return;
+        setServices(
+          records.map((record) => ({
+            name: record.name,
+            slug: record.slug,
+            tag: record.type,
+            heading: record.title,
+            body: record.description,
+            zone: record.zone,
+            image: record.image,
+            alt: record.alt,
+            accent: record.accent,
+            link: record.link,
+            questionnaireSituations: record.questionnaireSituations,
+          })),
+        );
+      })
+      .catch(() => setServices([]));
+  }, []);
+
+  return services;
+}

@@ -1,5 +1,6 @@
 export interface ContentRepository {
   listPublic(): Promise<unknown[]>;
+  findPublic(key: string): Promise<unknown | null>;
   listAdmin(): Promise<unknown[]>;
   preview(key: string): Promise<unknown | null>;
   listRevisions(key: string): Promise<unknown[]>;

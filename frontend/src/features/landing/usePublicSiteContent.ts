@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { requestJson } from '../../shared/api-client.js';
-import { services } from '../../shared/service-catalog.js';
+import { useServiceCatalog } from '../../shared/service-catalog.js';
 
 type HeroContent = Record<string, unknown>;
 export type PublicMedia = {
@@ -15,22 +15,43 @@ export type PublicMedia = {
 
 export function usePublicSiteContent() {
   const [heroContent, setHeroContent] = useState<HeroContent>({});
+  const [contentBlocks, setContentBlocks] = useState<Record<string, HeroContent>>({});
   const [extraContent, setExtraContent] = useState<{ key: string; title: string; body: string }[]>(
     [],
   );
   const [publicMedia, setPublicMedia] = useState<PublicMedia[]>([]);
-  const [serviceContent, setServiceContent] = useState(services);
+  const serviceContent = useServiceCatalog();
 
   useEffect(() => {
     requestJson<{ key: string; content: HeroContent }[]>('/api/public/site')
       .then((blocks) => {
         if (!Array.isArray(blocks)) return;
+        setContentBlocks(
+          Object.fromEntries(
+            blocks
+              .filter((block) => block.content && typeof block.content === 'object')
+              .map((block) => [block.key, block.content]),
+          ),
+        );
         const hero = blocks.find((block) => block.key === 'hero');
         if (hero?.content && typeof hero.content === 'object') setHeroContent(hero.content);
         setExtraContent(
           blocks
             .filter(
-              (block) => block.key !== 'hero' && block.content && typeof block.content === 'object',
+              (block) =>
+                ![
+                  'hero',
+                  'services',
+                  'questionnaires',
+                  'methode',
+                  'player',
+                  'coach',
+                  'zones',
+                  'contacts',
+                  'closing',
+                ].includes(block.key) &&
+                block.content &&
+                typeof block.content === 'object',
             )
             .flatMap((block) => {
               const title = block.content.title;
@@ -50,34 +71,11 @@ export function usePublicSiteContent() {
       .catch(() => setPublicMedia([]));
   }, []);
 
-  useEffect(() => {
-    requestJson<{ name: string; type: string; title: string; zone: string; description: string }[]>(
-      '/api/public/services',
-    )
-      .then((items) => {
-        if (!Array.isArray(items)) return;
-        setServiceContent((current) =>
-          current.map((service) => {
-            const source = items.find((item) => item.name === service.name);
-            return source
-              ? {
-                  ...service,
-                  tag: source.type,
-                  heading: source.title,
-                  zone: source.zone,
-                  body: source.description,
-                }
-              : service;
-          }),
-        );
-      })
-      .catch(() => {});
-  }, []);
-
-  const heroValue = (key: string, fallback: string) =>
-    typeof heroContent[key] === 'string' ? (heroContent[key] as string) : fallback;
+  const heroValue = (key: string) =>
+    typeof heroContent[key] === 'string' ? (heroContent[key] as string) : '';
+  const contentFor = (key: string) => contentBlocks[key] ?? {};
   const mediaFor = (service: string) =>
     publicMedia.find((item) => item.kind === 'PHOTO' && item.service === service);
 
-  return { heroValue, extraContent, publicMedia, serviceContent, mediaFor };
+  return { heroValue, contentFor, extraContent, publicMedia, serviceContent, mediaFor };
 }

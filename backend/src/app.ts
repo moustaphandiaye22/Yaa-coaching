@@ -51,7 +51,7 @@ import { ManageMedia, ReadPublicMedia } from './modules/media/application/manage
 import { createAuditRouter } from './modules/audit/presentation/audit-routes.js';
 import { PrismaAuditRepository } from './modules/audit/infrastructure/prisma-audit-repository.js';
 import { ReadAuditLog } from './modules/audit/application/read-audit-log.js';
-import { serviceRouter } from './modules/services/presentation/service-routes.js';
+import { createServiceRouter } from './modules/services/presentation/service-routes.js';
 import { asyncHandler } from './shared/http/async-handler.js';
 import { createQuestionnaireRouter } from './modules/questionnaire/presentation/questionnaire-routes.js';
 import { ReadQuestionnaire } from './modules/questionnaire/application/read-questionnaire.js';
@@ -161,9 +161,12 @@ app.use('/api/admin/content', createAdminContentRouter(manageContent, sessions))
 app.use('/api/media', createMediaRouter(manageMedia, readPublicMedia, sessions));
 app.use('/api/admin/media', createAdminMediaRouter(manageMedia, sessions));
 app.use('/api/public/media', createPublicMediaRouter(readPublicMedia));
-app.use('/api/services', serviceRouter);
-app.use('/api/public/services', serviceRouter);
-app.use('/api/public/questionnaire', createQuestionnaireRouter(new ReadQuestionnaire()));
+app.use('/api/services', createServiceRouter(manageContent));
+app.use('/api/public/services', createServiceRouter(manageContent));
+app.use(
+  '/api/public/questionnaire',
+  createQuestionnaireRouter(new ReadQuestionnaire(manageContent)),
+);
 app.use(
   '/api/admin/audit',
   createAuditRouter(new ReadAuditLog(new PrismaAuditRepository(prisma)), sessions),

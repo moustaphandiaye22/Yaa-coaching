@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { serviceNames } from '../../services/domain/service-catalog.js';
 import { submissionStatuses } from '../domain/submission-status.js';
 
-export const serviceSchema = z.enum(['YAA COACHING', 'YAA PLAYER', 'YAA AUTONOMIE']);
+export const serviceSchema = z.enum(serviceNames);
 const answerValueSchema = z.union([z.string().max(5000), z.array(z.string().max(300)).max(20)]);
 const answersSchema = z
   .record(z.string().min(1).max(80), answerValueSchema)
