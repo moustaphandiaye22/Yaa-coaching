@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Images, Play, X } from 'lucide-react';
-import { API } from '../../shared/site-content.js';
+import { Images, Play, RefreshCw, X } from 'lucide-react';
+import { mediaUrl } from '../../shared/site-content.js';
 import { requestJson } from '../../shared/api-client.js';
 
 type GalleryMedia = {
@@ -17,14 +17,18 @@ export default function GallerySection() {
   const [tab, setTab] = useState<'PHOTO' | 'VIDEO'>('PHOTO');
   const [media, setMedia] = useState<GalleryMedia[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [request, setRequest] = useState(0);
   const [modal, setModal] = useState<GalleryMedia | null>(null);
 
   useEffect(() => {
+    setLoading(true);
+    setLoadError(false);
     requestJson<GalleryMedia[]>('/api/public/media')
       .then((result: GalleryMedia[]) => setMedia(Array.isArray(result) ? result : []))
-      .catch(() => setMedia([]))
+      .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
-  }, []);
+  }, [request]);
 
   const visibleMedia = media.filter((item) => item.kind === tab);
   const photoCount = media.filter((item) => item.kind === 'PHOTO').length;
@@ -70,6 +74,20 @@ export default function GallerySection() {
           <div className="gallery-empty" role="status">
             Chargement de la galerie…
           </div>
+        ) : loadError ? (
+          <div className="gallery-empty content-list-error" role="alert">
+            <Images size={22} />
+            <div>
+              <h3>La galerie est momentanément indisponible.</h3>
+              <p>Les photos et vidéos ne peuvent pas être chargées pour le moment.</p>
+            </div>
+            <button
+              className="button button-outline"
+              onClick={() => setRequest((value) => value + 1)}
+            >
+              Réessayer <RefreshCw size={16} />
+            </button>
+          </div>
         ) : visibleMedia.length ? (
           <div className="gallery-grid gallery-live-grid">
             {visibleMedia.map((item) => (
@@ -81,7 +99,7 @@ export default function GallerySection() {
                     onClick={() => setModal(item)}
                     aria-label={`Agrandir : ${item.alt}`}
                   >
-                    <img src={`${API}${item.url}`} alt={item.alt} loading="lazy" />
+                    <img src={mediaUrl(item.url)} alt={item.alt} loading="lazy" />
                     <span className="gallery-zoom">
                       <Images size={16} />
                     </span>
@@ -89,7 +107,7 @@ export default function GallerySection() {
                 ) : (
                   <div className="gallery-live-video">
                     <video
-                      src={`${API}${item.url}`}
+                      src={mediaUrl(item.url)}
                       controls
                       preload="metadata"
                       aria-label={item.alt}
@@ -119,6 +137,12 @@ export default function GallerySection() {
             </div>
           </div>
         )}
+        {!loading && !loadError && visibleMedia.some((item) => item.url.startsWith('/images/')) && (
+          <p className="gallery-disclaimer">
+            Ces visuels sont des illustrations générées par IA. Ils ne représentent pas de
+            véritables séances ni des clients.
+          </p>
+        )}
       </section>
       {modal && (
         <div
@@ -133,7 +157,7 @@ export default function GallerySection() {
           <button aria-label="Fermer" onClick={() => setModal(null)}>
             <X />
           </button>
-          <img src={`${API}${modal.url}`} alt={modal.alt} />
+          <img src={mediaUrl(modal.url)} alt={modal.alt} />
           <span>{modal.caption || modal.alt}</span>
         </div>
       )}

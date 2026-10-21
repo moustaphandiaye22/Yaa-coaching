@@ -20,12 +20,17 @@ export function usePublicSiteContent() {
     [],
   );
   const [publicMedia, setPublicMedia] = useState<PublicMedia[]>([]);
+  const [contentStatus, setContentStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [contentRequest, setContentRequest] = useState(0);
   const serviceContent = useServiceCatalog();
 
   useEffect(() => {
+    setContentStatus('loading');
     requestJson<{ key: string; content: HeroContent }[]>('/api/public/site')
       .then((blocks) => {
-        if (!Array.isArray(blocks)) return;
+        if (!Array.isArray(blocks) || !blocks.some((block) => block.key === 'hero')) {
+          throw new Error('Contenu public incomplet.');
+        }
         setContentBlocks(
           Object.fromEntries(
             blocks
@@ -61,9 +66,10 @@ export function usePublicSiteContent() {
                 : [];
             }),
         );
+        setContentStatus('ready');
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => setContentStatus('error'));
+  }, [contentRequest]);
 
   useEffect(() => {
     requestJson<PublicMedia[]>('/api/public/media')
@@ -77,5 +83,14 @@ export function usePublicSiteContent() {
   const mediaFor = (service: string) =>
     publicMedia.find((item) => item.kind === 'PHOTO' && item.service === service);
 
-  return { heroValue, contentFor, extraContent, publicMedia, serviceContent, mediaFor };
+  return {
+    heroValue,
+    contentFor,
+    extraContent,
+    publicMedia,
+    serviceContent,
+    mediaFor,
+    contentStatus,
+    reloadContent: () => setContentRequest((current) => current + 1),
+  };
 }

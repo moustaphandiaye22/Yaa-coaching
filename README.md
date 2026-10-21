@@ -81,7 +81,7 @@ L’administration permet de créer, désactiver, modifier le rôle et réinitia
 
 ## Images et vidéos
 
-Les fichiers d’images sources ne sont pas inclus dans le cahier des charges. Ajouter les visuels autorisés dans `frontend/public/images/` sous les noms `coaching.jpg`, `player.jpg` et `autonomie.jpg`. Les panneaux de la galerie sont prêts et signalent qu’aucune vidéo n’est fournie.
+Trois illustrations WebP générées sont fournies dans `frontend/public/images/` pour YAA COACHING, YAA PLAYER et YAA AUTONOMIE. Le seeder inscrit leurs références dans la table `Media` sans remplacer les médias déjà présents ; leur publication se gère ensuite dans l’administration. Les légendes indiquent qu’il s’agit d’illustrations et non de véritables séances. Les nouveaux téléversements restent stockés dans `MEDIA_STORAGE_DIR`. Aucune vidéo de départ n’est fournie.
 
 ## Mise en production
 

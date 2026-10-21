@@ -117,7 +117,13 @@ app.use(
     '/api/public/submissions',
     '/api/public/reviews',
   ],
-  rateLimit({ windowMs: 60 * 60 * 1000, limit: 8, standardHeaders: true, legacyHeaders: false }),
+  rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 8,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (request) => request.method !== 'POST',
+  }),
 );
 app.use(
   '/api/admin/media/upload',

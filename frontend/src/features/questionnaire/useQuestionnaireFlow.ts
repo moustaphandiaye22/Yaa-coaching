@@ -31,7 +31,7 @@ export function useQuestionnaireFlow(
       item.questionnaireSituations.includes(situation),
   )?.name;
   const service: Service =
-    matchedService ?? (initialService as Service) ?? serviceCatalog[0]?.name ?? 'YAA COACHING';
+    matchedService || (initialService as Service) || serviceCatalog[0]?.name || 'YAA COACHING';
   const isMinor = answers.age === 'Moins de 18 ans';
   const activeQuestionnaire = questionnaire?.service === service ? questionnaire : null;
   const currentQuestions = activeQuestionnaire?.steps[step] ?? [];

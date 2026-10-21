@@ -1,4 +1,18 @@
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  CircleHelp,
+  Files,
+  History,
+  Images,
+  Inbox,
+  Mail,
+  Star,
+  UsersRound,
+  X,
+} from 'lucide-react';
 import AdminSubmissionsPanel from './AdminSubmissionsPanel.js';
 import AdminSubmissionDrawer from './AdminSubmissionDrawer.js';
 import AdminContentPanel from './AdminContentPanel.js';
@@ -128,22 +142,24 @@ function Admin({ onNavigate }: AdminProps) {
         <div className="admin-menu-label">GESTION</div>
         <nav className="admin-menu" aria-label="Navigation administration">
           {[
-            ['demandes', '◌', 'Demandes', counts.NEW],
-            ['avis', '☆', 'Avis', counts.PENDING],
-            ['faq', '?', 'Questions fréquentes', null],
-            ['contenu', '▤', 'Contenus', null],
-            ['medias', '▧', 'Médias', null],
-            ['comptes', '♙', 'Comptes', null],
-            ['journal', '◷', 'Journal', null],
-            ['notifications', '✉', 'Notifications', null],
-          ].map(([id, icon, label, count]) => (
+            { id: 'demandes', Icon: Inbox, label: 'Demandes', count: counts.NEW },
+            { id: 'avis', Icon: Star, label: 'Avis', count: counts.PENDING },
+            { id: 'faq', Icon: CircleHelp, label: 'Questions fréquentes' },
+            { id: 'contenu', Icon: Files, label: 'Contenus' },
+            { id: 'medias', Icon: Images, label: 'Médias' },
+            { id: 'comptes', Icon: UsersRound, label: 'Comptes' },
+            { id: 'journal', Icon: History, label: 'Journal' },
+            { id: 'notifications', Icon: Mail, label: 'Notifications' },
+          ].map(({ id, Icon, label, count }) => (
             <button
-              key={String(id)}
+              key={id}
               className={`admin-menu-item ${tab === id ? 'active' : ''}`}
               aria-current={tab === id ? 'page' : undefined}
-              onClick={() => setTab(String(id))}
+              onClick={() => setTab(id)}
             >
-              <span>{icon}</span>
+              <span>
+                <Icon size={17} strokeWidth={1.8} aria-hidden="true" />
+              </span>
               {label}
               {count ? <i>{count}</i> : null}
             </button>
@@ -250,9 +266,15 @@ function Admin({ onNavigate }: AdminProps) {
                   <b>{r.pseudonym}</b>
                   <span className={`status-pill status-${r.status.toLowerCase()}`}>{r.status}</span>
                 </div>
-                <div className="admin-stars">
-                  {'★'.repeat(r.rating)}
-                  {'☆'.repeat(5 - r.rating)}{' '}
+                <div className="admin-stars" aria-label={`${r.rating} sur 5`}>
+                  {Array.from({ length: 5 }, (_, index) => (
+                    <Star
+                      key={index}
+                      size={15}
+                      fill={index < r.rating ? 'currentColor' : 'none'}
+                      aria-hidden="true"
+                    />
+                  ))}{' '}
                   <small>
                     {r.service} · {new Date(r.createdAt).toLocaleDateString('fr-FR')}
                   </small>

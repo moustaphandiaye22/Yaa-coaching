@@ -4,6 +4,7 @@ import argon2 from 'argon2';
 import { services } from './default-services.js';
 import { getQuestionnaire } from './default-questionnaires.js';
 import { publicContentDefaults } from './default-public-content.js';
+import { defaultMedia } from './default-media.js';
 
 const prisma = new PrismaClient();
 
@@ -75,6 +76,17 @@ async function seedFaqs() {
     createdCount += 1;
   }
 
+  return createdCount;
+}
+
+async function seedMedia() {
+  let createdCount = 0;
+  for (const media of defaultMedia) {
+    const existing = await prisma.media.findFirst({ where: { url: media.url } });
+    if (existing) continue;
+    await prisma.media.create({ data: media });
+    createdCount += 1;
+  }
   return createdCount;
 }
 
@@ -200,9 +212,11 @@ async function main() {
   await seedAdmin(email, password);
   const createdFaqs = await seedFaqs();
   await seedPublishedContent();
+  const createdMedia = await seedMedia();
 
   console.info('Seed terminé : compte administrateur, contenus du site et FAQ initialisés.');
   console.info(`FAQ ajoutées : ${createdFaqs}.`);
+  console.info(`Médias ajoutés : ${createdMedia}.`);
 }
 
 try {

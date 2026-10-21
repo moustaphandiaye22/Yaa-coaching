@@ -5,6 +5,8 @@ import {
   CircleCheck,
   Dumbbell,
   Heart,
+  MapPin,
+  RefreshCw,
   Sparkles,
   Target,
   X,
@@ -15,7 +17,7 @@ import GallerySection from '../gallery/GallerySection.js';
 import ReviewsSection from '../reviews/ReviewsSection.js';
 import FaqSection from '../faq/FaqSection.js';
 import QuestionnaireSection from '../questionnaire/QuestionnaireSection.js';
-import { API } from '../../shared/site-content.js';
+import { mediaUrl } from '../../shared/site-content.js';
 import { usePublicSiteContent } from './usePublicSiteContent.js';
 
 function PublicSite({
@@ -32,7 +34,15 @@ function PublicSite({
   const [notice, setNotice] = useState('');
   const [initialSituation, setInitialSituation] = useState('');
   const [initialService, setInitialService] = useState('');
-  const { heroValue, contentFor, extraContent, serviceContent, mediaFor } = usePublicSiteContent();
+  const {
+    heroValue,
+    contentFor,
+    extraContent,
+    serviceContent,
+    mediaFor,
+    contentStatus,
+    reloadContent,
+  } = usePublicSiteContent();
   const page = route === '/' ? 'home' : route.slice(1);
   const pageTitles: Record<string, string> = {
     home: 'Accueil',
@@ -78,7 +88,34 @@ function PublicSite({
             <h1>{pageTitle}</h1>
           </header>
         )}
-        {show('home') && (
+        {show('home', 'accompagnements', 'methode', 'coach') && contentStatus !== 'ready' && (
+          <section className="content-state section-pad" role="status" aria-live="polite">
+            <div className="content-state-card">
+              <span className="content-state-icon">
+                <RefreshCw size={22} />
+              </span>
+              <div>
+                <p className="eyebrow">CONTENU DU SITE</p>
+                <h2>
+                  {contentStatus === 'loading'
+                    ? 'Nous préparons cette page.'
+                    : 'Contenu momentanément indisponible.'}
+                </h2>
+                <p>
+                  {contentStatus === 'loading'
+                    ? 'Les informations sont en cours de chargement.'
+                    : 'La connexion aux informations du site a échoué. Vous pouvez réessayer dans un instant.'}
+                </p>
+                {contentStatus === 'error' && (
+                  <button className="button button-dark" type="button" onClick={reloadContent}>
+                    Réessayer <RefreshCw size={16} />
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+        {show('home') && contentStatus === 'ready' && (
           <section className="hero">
             <div className="hero-copy">
               <p className="eyebrow">
@@ -101,13 +138,13 @@ function PublicSite({
               </div>
               <div className="hero-shortcuts">
                 <a href="/accompagnements">
-                  Reprendre une activité <ArrowUpRight size={14} />
+                  <span>Reprendre une activité</span> <ArrowUpRight size={14} />
                 </a>
                 <a href="/accompagnements">
-                  Progresser au football <ArrowUpRight size={14} />
+                  <span>Progresser au football</span> <ArrowUpRight size={14} />
                 </a>
                 <a href="/accompagnements">
-                  Préserver l’autonomie <ArrowUpRight size={14} />
+                  <span>Préserver l’autonomie</span> <ArrowUpRight size={14} />
                 </a>
               </div>
             </div>
@@ -116,7 +153,7 @@ function PublicSite({
                 <div
                   className="hero-image hero-image-loaded"
                   style={{
-                    backgroundImage: `linear-gradient(145deg,rgba(35,45,36,.05),rgba(72,65,46,.2)),url("${API}${mediaFor('YAA COACHING')!.url}")`,
+                    backgroundImage: `linear-gradient(145deg,rgba(35,45,36,.05),rgba(72,65,46,.2)),url("${mediaUrl(mediaFor('YAA COACHING')!.url)}")`,
                   }}
                   role="img"
                   aria-label={mediaFor('YAA COACHING')!.alt}
@@ -128,9 +165,9 @@ function PublicSite({
               <div className="hero-orbit orbit-two" />
               <div className="hero-stamp">
                 <span>ÉCOUTER</span>
-                <i>✳</i>
+                <Sparkles size={13} aria-hidden="true" />
                 <span>COMPRENDRE</span>
-                <i>✳</i>
+                <Sparkles size={13} aria-hidden="true" />
                 <span>AVANCER</span>
               </div>
               <div className="hero-note">
@@ -159,6 +196,7 @@ function PublicSite({
           </section>
         )}
         {show('home') &&
+          contentStatus === 'ready' &&
           extraContent.map((block) => (
             <section className="published-content-block section-pad" key={block.key}>
               <p className="eyebrow">YAA COACHING</p>
@@ -166,7 +204,7 @@ function PublicSite({
               <p>{block.body}</p>
             </section>
           ))}
-        {show('home', 'accompagnements') && (
+        {show('home', 'accompagnements') && contentStatus === 'ready' && (
           <section className="services-section section-pad" id="accompagnements">
             <div className="section-heading">
               <div>
@@ -186,7 +224,7 @@ function PublicSite({
                   <article key={s.name} id={s.slug} className={`service-card ${s.accent}`}>
                     <div className="service-image-wrap">
                       {photo ? (
-                        <img src={`${API}${photo.url}`} alt={photo.alt} loading="lazy" />
+                        <img src={mediaUrl(photo.url)} alt={photo.alt} loading="lazy" />
                       ) : (
                         <div
                           className={`service-image-placeholder ${s.accent}`}
@@ -194,6 +232,9 @@ function PublicSite({
                         />
                       )}
                       <span className="image-count">0{i + 1} / 03</span>
+                      {photo?.url.startsWith('/images/') && (
+                        <span className="image-disclaimer">VISUEL D’ILLUSTRATION</span>
+                      )}
                       <span className="service-icon">
                         {i === 0 ? (
                           <Dumbbell size={18} />
@@ -230,7 +271,7 @@ function PublicSite({
             </div>
           </section>
         )}
-        {show('methode') && (
+        {show('methode') && contentStatus === 'ready' && (
           <section className="pillars section-pad">
             <div className="pillar-top">
               <p className="eyebrow">{String(methodContent.pillarsEyebrow ?? '')}</p>
@@ -261,12 +302,12 @@ function PublicSite({
             </div>
           </section>
         )}
-        {show('accompagnements') && (
+        {show('accompagnements') && contentStatus === 'ready' && (
           <section className="player-feature section-pad" id="player">
             <div className="player-visual">
               {mediaFor('YAA PLAYER') ? (
                 <img
-                  src={`${API}${mediaFor('YAA PLAYER')!.url}`}
+                  src={mediaUrl(mediaFor('YAA PLAYER')!.url)}
                   alt={mediaFor('YAA PLAYER')!.alt}
                   loading="lazy"
                 />
@@ -310,7 +351,7 @@ function PublicSite({
             </div>
           </section>
         )}
-        {show('methode') && (
+        {show('methode') && contentStatus === 'ready' && (
           <section className="method-section section-pad" id="methode">
             <div className="method-heading">
               <p className="eyebrow">{String(methodContent.methodEyebrow ?? '')}</p>
@@ -339,12 +380,12 @@ function PublicSite({
             </div>
           </section>
         )}
-        {show('coach') && (
+        {show('coach') && contentStatus === 'ready' && (
           <section className="coach-section section-pad" id="coach">
             <div className="coach-image">
               {mediaFor('YAA COACHING') ? (
                 <img
-                  src={`${API}${mediaFor('YAA COACHING')!.url}`}
+                  src={mediaUrl(mediaFor('YAA COACHING')!.url)}
                   alt={mediaFor('YAA COACHING')!.alt}
                   loading="lazy"
                 />
@@ -352,6 +393,9 @@ function PublicSite({
                 <div className="editorial-image-placeholder coach-placeholder" aria-hidden="true" />
               )}
               <span className="coach-seal">{String(coachContent.photoSeal ?? '')}</span>
+              {mediaFor('YAA COACHING')?.url.startsWith('/images/') && (
+                <span className="coach-image-disclaimer">Illustration générée par IA</span>
+              )}
               <span className="coach-caption">
                 {String(coachContent.photoCaption ?? '')}{' '}
                 <small>{String(coachContent.photoLocation ?? '')}</small>
@@ -401,7 +445,7 @@ function PublicSite({
             onNotice={setNotice}
           />
         )}
-        {show('accompagnements') && (
+        {show('accompagnements') && contentStatus === 'ready' && (
           <section className="zones-section section-pad">
             <div className="zones-left">
               <p className="eyebrow">{String(zonesContent.eyebrow ?? '')}</p>
@@ -435,7 +479,7 @@ function PublicSite({
               <div className="map-art">
                 <div className="map-lines" />
                 <span className="map-pin">
-                  <i /> VIERZON
+                  <MapPin size={18} aria-hidden="true" /> VIERZON
                 </span>
                 <span className="map-ring ring-a" />
                 <span className="map-ring ring-b" />
@@ -447,7 +491,7 @@ function PublicSite({
         {show('galerie') && <GallerySection />}
         {show('avis') && <ReviewsSection onNotice={setNotice} />}
         {show('avis') && <FaqSection />}
-        {show('home') && (
+        {show('home') && contentStatus === 'ready' && (
           <section className="closing-cta">
             <p className="eyebrow">{String(closingContent.eyebrow ?? '')}</p>
             <h2 className="copy-preserve-lines">
@@ -458,7 +502,9 @@ function PublicSite({
             <a className="button button-cream" href="/questionnaire">
               {String(closingContent.buttonLabel ?? '')} <ArrowUpRight size={16} />
             </a>
-            <span className="closing-star">✳</span>
+            <span className="closing-star" aria-hidden="true">
+              <Sparkles size={38} strokeWidth={1.2} />
+            </span>
           </section>
         )}
       </main>

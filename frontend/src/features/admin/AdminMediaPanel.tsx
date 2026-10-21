@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ImagePlus, Trash2, Upload } from 'lucide-react';
-import { API } from '../../shared/site-content.js';
+import { mediaUrl } from '../../shared/site-content.js';
 import { requestJson } from '../../shared/api-client.js';
 import type { AdminApi } from '../../shared/api-client.js';
 import { useServiceCatalog } from '../../shared/service-catalog.js';
@@ -176,10 +176,10 @@ export default function AdminMediaPanel({ api, onError }: Props) {
             <article key={item.id} className="admin-media-card">
               <div className="admin-media-preview">
                 {item.kind === 'PHOTO' ? (
-                  <img src={`${API}${item.url}`} alt={item.alt} />
+                  <img src={mediaUrl(item.url)} alt={item.alt} />
                 ) : (
                   <video
-                    src={`${API}${item.url}`}
+                    src={mediaUrl(item.url)}
                     controls
                     preload="metadata"
                     aria-label={item.alt}

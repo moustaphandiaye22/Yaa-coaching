@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowUpRight, MessageCircle, Star } from 'lucide-react';
+import { ArrowUpRight, MessageCircle, RefreshCw, Star } from 'lucide-react';
 import { ApiError, requestJson } from '../../shared/api-client.js';
 import { useServiceCatalog } from '../../shared/service-catalog.js';
 import { usePublicContact } from '../../shared/use-public-contact.js';
@@ -10,14 +10,20 @@ type Props = { onNotice: (message: string) => void };
 export default function ReviewsSection({ onNotice }: Props) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [request, setRequest] = useState(0);
   const [sending, setSending] = useState(false);
   const services = useServiceCatalog();
   const { email } = usePublicContact();
   useEffect(() => {
+    setLoading(true);
+    setLoadError(false);
     requestJson<Review[]>('/api/public/reviews')
       .then((data) => setReviews(Array.isArray(data) ? data : []))
-      .catch(() => {});
-  }, []);
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
+  }, [request]);
 
   async function sendReview(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,12 +75,30 @@ export default function ReviewsSection({ onNotice }: Props) {
         </div>
         <div className="review-stat">
           <span>AVIS PUBLIÉS</span>
-          <b>{String(reviews.length).padStart(2, '0')}</b>
+          <b>{loading || loadError ? '—' : String(reviews.length).padStart(2, '0')}</b>
           <small>avec votre accord</small>
         </div>
       </div>
       <div className="reviews-body">
-        {reviews.length === 0 ? (
+        {loading ? (
+          <div className="content-list-error" role="status">
+            Chargement des avis…
+          </div>
+        ) : loadError ? (
+          <div className="content-list-error" role="alert">
+            <MessageCircle size={22} />
+            <div>
+              <h3>Les avis sont momentanément indisponibles.</h3>
+              <p>Réessayez dans un instant pour consulter les avis publiés.</p>
+            </div>
+            <button
+              className="button button-outline"
+              onClick={() => setRequest((value) => value + 1)}
+            >
+              Réessayer <RefreshCw size={16} />
+            </button>
+          </div>
+        ) : reviews.length === 0 ? (
           <div className="no-reviews">
             <span className="no-review-icon">
               <MessageCircle size={19} />
