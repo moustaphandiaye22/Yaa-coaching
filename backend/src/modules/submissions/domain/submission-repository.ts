@@ -18,8 +18,16 @@ export type NewSubmission = {
 
 export interface SubmissionRepository {
   createSubmission(submission: NewSubmission): Promise<{ id: string; createdAt: Date }>;
-  listAdmin(status: SubmissionStatus | undefined, query: string, page: number, size: number): Promise<[unknown[], number]>;
+  listAdmin(
+    status: SubmissionStatus | undefined,
+    query: string,
+    page: number,
+    size: number,
+  ): Promise<[unknown[], number]>;
   findById(id: string): Promise<unknown | null>;
-  updateAdmin(id: string, data: { status?: SubmissionStatus; internalNotes?: string; actorId?: string }): Promise<unknown>;
+  updateAdmin(
+    id: string,
+    data: { status?: SubmissionStatus; internalNotes?: string; actorId?: string },
+  ): Promise<unknown>;
   deleteAdmin(id: string, actorId: string): Promise<void>;
 }

@@ -9,10 +9,26 @@
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"npm:dev --workspace backend\" \"npm:dev --workspace frontend\"",
     "build": "npm run build --workspace backend && npm run build --workspace frontend",
-    "start": "npm run start --workspace backend"
+    "start": "npm run start --workspace backend",
+    "lint": "node scripts/check-architecture.mjs && eslint backend/src frontend/src tests eslint.config.mjs jest.config.cjs",
+    "architecture": "node scripts/check-architecture.mjs",
+    "test": "jest --runInBand",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "@eslint/js": "^9.39.5",
+    "@types/jest": "^30.0.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.13.0",
+    "jest": "^30.5.2",
+    "prettier": "^3.9.10",
+    "ts-jest": "^29.4.15",
+    "typescript-eslint": "^8.72.0"
   },
   "allowScripts": {
     "@prisma/client@6.19.3": true,

@@ -17,7 +17,12 @@ export class LastActiveAdministratorError extends Error {
 
 export interface UserManagementRepository {
   list(): Promise<ManagedUser[]>;
-  create(email: string, passwordHash: string, role: ManagedUser['role'], actorId: string): Promise<ManagedUser>;
+  create(
+    email: string,
+    passwordHash: string,
+    role: ManagedUser['role'],
+    actorId: string,
+  ): Promise<ManagedUser>;
   update(id: string, changes: UserChanges, actorId: string): Promise<ManagedUser>;
   delete(id: string, actorId: string): Promise<void>;
 }

@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
-import type { SessionStore } from '../domain/session.js';
-import { readCookie } from '../../../shared/http/cookie.js';
+import type { SessionStore } from '../../modules/auth/domain/session.js';
+import { readCookie } from './cookie.js';
 
 declare global {
   namespace Express {
@@ -32,7 +32,10 @@ export function createRequireAdmin(sessionStore: SessionStore) {
   const requireAuthenticated = createRequireAuthenticated(sessionStore);
   return (request: Request, response: Response, next: NextFunction): void => {
     requireAuthenticated(request, response, (error?: unknown) => {
-      if (error) { next(error); return; }
+      if (error) {
+        next(error);
+        return;
+      }
       if (response.locals.userRole !== 'ADMIN') {
         response.status(403).json({ error: 'Accès réservé à l’administration.' });
         return;

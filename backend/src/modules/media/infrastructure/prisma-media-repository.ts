@@ -18,7 +18,9 @@ export class PrismaMediaRepository implements MediaRepository {
   create(data: NewMedia, actorId: string) {
     return this.prisma.$transaction(async (transaction) => {
       const media = await transaction.media.create({ data });
-      await transaction.auditLog.create({ data: { actorId, action: 'MEDIA_CREATED', entity: 'Media', entityId: media.id } });
+      await transaction.auditLog.create({
+        data: { actorId, action: 'MEDIA_CREATED', entity: 'Media', entityId: media.id },
+      });
       return media;
     });
   }
@@ -26,7 +28,9 @@ export class PrismaMediaRepository implements MediaRepository {
   update(id: string, data: MediaChanges, actorId: string) {
     return this.prisma.$transaction(async (transaction) => {
       const media = await transaction.media.update({ where: { id }, data });
-      await transaction.auditLog.create({ data: { actorId, action: 'MEDIA_UPDATED', entity: 'Media', entityId: id } });
+      await transaction.auditLog.create({
+        data: { actorId, action: 'MEDIA_UPDATED', entity: 'Media', entityId: id },
+      });
       return media;
     });
   }
@@ -34,7 +38,9 @@ export class PrismaMediaRepository implements MediaRepository {
   async delete(id: string, actorId: string) {
     await this.prisma.$transaction(async (transaction) => {
       await transaction.media.delete({ where: { id } });
-      await transaction.auditLog.create({ data: { actorId, action: 'MEDIA_DELETED', entity: 'Media', entityId: id } });
+      await transaction.auditLog.create({
+        data: { actorId, action: 'MEDIA_DELETED', entity: 'Media', entityId: id },
+      });
     });
   }
 }

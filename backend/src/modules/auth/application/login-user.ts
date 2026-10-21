@@ -17,7 +17,12 @@ export class LoginUser {
 
     const token = randomBytes(32).toString('base64url');
     const expiresAt = Date.now() + SESSION_DURATION_MS;
-    await this.sessions.save(token, { userId: user.id, email: user.email, role: user.role, expiresAt });
+    await this.sessions.save(token, {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      expiresAt,
+    });
     return { token, email: user.email, role: user.role, expiresAt };
   }
 }

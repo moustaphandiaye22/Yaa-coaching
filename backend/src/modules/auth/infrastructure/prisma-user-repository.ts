@@ -5,7 +5,10 @@ export class PrismaUserRepository implements UserRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   findByEmail(email: string) {
-    return this.prisma.user.findFirst({ where: { email, active: true }, select: { id: true, email: true, passwordHash: true, role: true } });
+    return this.prisma.user.findFirst({
+      where: { email, active: true },
+      select: { id: true, email: true, passwordHash: true, role: true },
+    });
   }
 
   async findEmailById(id: string): Promise<string | null> {

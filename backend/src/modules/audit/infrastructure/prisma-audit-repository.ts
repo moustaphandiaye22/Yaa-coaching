@@ -13,6 +13,6 @@ export class PrismaAuditRepository implements AuditRepository {
     });
     const hasNextPage = items.length > limit;
     const page = hasNextPage ? items.slice(0, limit) : items;
-    return { items: page, nextCursor: hasNextPage ? page.at(-1)?.id ?? null : null };
+    return { items: page, nextCursor: hasNextPage ? (page.at(-1)?.id ?? null) : null };
   }
 }

@@ -19,6 +19,7 @@ Infrastructure (Prisma, sessions, services externes)
 - `presentation` traduit les entrées HTTP/UI, valide les formes reçues et appelle les cas d’usage.
 - `infrastructure` fournit les adaptateurs concrets pour PostgreSQL, les sessions et les autres services.
 - `app.ts` est le point de composition : il instancie les adaptateurs et les injecte dans les modules.
+- Les services applicatifs sont créés dans `app.ts`, puis injectés aux routes ; la présentation ne construit pas ses dépendances.
 
 ## Frontend
 
@@ -39,3 +40,5 @@ Le chiffrement et les index HMAC des données personnelles se trouvent dans `sha
 - Les accès Prisma restent dans les adaptateurs d’infrastructure.
 - Les erreurs sont converties au bord HTTP en réponses publiques normalisées. Les réponses sensibles ne sont pas journalisées.
 - Éviter les dépendances circulaires entre modules ; partager un contrat étroit dans `shared` uniquement si plusieurs domaines en ont réellement besoin.
+- `npm run architecture` vérifie les frontières entre les couches, interdit Prisma dans les contrôleurs, interdit `any` dans le frontend et signale les imports directs entre fonctionnalités.
+- `frontend/src/shared/api-client.ts` centralise les requêtes HTTP ; les hooks de fonctionnalité orchestrent chargement et interactions, tandis que les composants rendent l’interface.

@@ -1,5 +1,13 @@
 export type MediaKind = 'PHOTO' | 'VIDEO';
-export type NewMedia = { kind: MediaKind; service: string; url: string; alt: string; caption: string; position?: number; published?: boolean };
+export type NewMedia = {
+  kind: MediaKind;
+  service: string;
+  url: string;
+  alt: string;
+  caption: string;
+  position?: number;
+  published?: boolean;
+};
 export type MediaChanges = Partial<NewMedia>;
 
 export interface MediaRepository {

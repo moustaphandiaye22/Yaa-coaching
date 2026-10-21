@@ -1,13 +1,15 @@
 import { Router } from 'express';
-import { getQuestionnaire, isServiceName } from '../domain/questionnaire.js';
+import { ReadQuestionnaire } from '../application/read-questionnaire.js';
 
-export const questionnaireRouter = Router();
-
-questionnaireRouter.get('/', (request, response) => {
-  const service = request.query.service;
-  if (service !== undefined && !isServiceName(service)) {
-    response.status(400).json({ error: 'Accompagnement invalide.' });
-    return;
-  }
-  response.json(getQuestionnaire(service));
-});
+export function createQuestionnaireRouter(readQuestionnaire: ReadQuestionnaire) {
+  const router = Router();
+  router.get('/', (request, response) => {
+    const questionnaire = readQuestionnaire.execute(request.query.service);
+    if (!questionnaire) {
+      response.status(400).json({ error: 'Accompagnement invalide.' });
+      return;
+    }
+    response.json(questionnaire);
+  });
+  return router;
+}
