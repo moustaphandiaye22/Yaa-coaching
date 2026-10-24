@@ -1,7 +1,8 @@
 import type { ErrorRequestHandler } from 'express';
 import { Prisma } from '@prisma/client';
 
-export const errorHandler: ErrorRequestHandler = (error, _request, response) => {
+export const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
+  void _next;
   console.error('API error:', error instanceof Error ? error.name : 'unknown');
   if (error instanceof SyntaxError && 'status' in error && error.status === 400) {
     response.status(400).json({ error: 'Corps JSON invalide.' });

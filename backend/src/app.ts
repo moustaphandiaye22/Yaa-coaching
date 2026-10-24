@@ -77,6 +77,12 @@ const frontendOrigins = new Set(
     .map((origin) => origin.trim())
     .filter(Boolean),
 );
+if (process.env.VERCEL_URL) {
+  const deploymentUrl = process.env.VERCEL_URL.startsWith('http')
+    ? process.env.VERCEL_URL
+    : `https://${process.env.VERCEL_URL}`;
+  frontendOrigins.add(new URL(deploymentUrl).origin);
+}
 const isAllowedFrontendOrigin = (origin: string) => frontendOrigins.has(origin);
 const mediaStorage = new LocalMediaStorage();
 

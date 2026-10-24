@@ -9,9 +9,10 @@ export type Question = {
   max?: number;
   condition?: [string, string] | { key: string; equals?: string; notEquals?: string };
 };
+const configuredApiUrl = (import.meta as ImportMeta & { env: { VITE_API_URL?: string } }).env
+  .VITE_API_URL;
 export const API = (
-  (import.meta as ImportMeta & { env: { VITE_API_URL?: string } }).env.VITE_API_URL ??
-  (import.meta.env.DEV ? 'http://localhost:3000' : '')
+  import.meta.env.DEV ? (configuredApiUrl ?? 'http://localhost:3000') : ''
 ).replace(/\/$/, '');
 
 export function mediaUrl(path: string): string {

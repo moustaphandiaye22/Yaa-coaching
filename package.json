@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "concurrently -k -n api,web -c blue,green \"npm:dev --workspace backend\" \"npm:dev --workspace frontend\"",
     "build": "npm run build --workspace backend && npm run build --workspace frontend",
-    "start": "npm run start --workspace backend",
+    "start": "npm run prisma:deploy --workspace backend && npm run prisma:seed --workspace backend && npm run start --workspace backend",
     "lint": "node scripts/check-architecture.mjs && eslint backend/src frontend/src tests eslint.config.mjs jest.config.cjs",
     "architecture": "node scripts/check-architecture.mjs",
     "test": "jest --runInBand",
