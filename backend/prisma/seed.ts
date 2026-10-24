@@ -40,12 +40,12 @@ function getAdminCredentials() {
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
     /example|placeholder|change-this|replace-me/i.test(email)
   ) {
-    throw new Error('Définissez une vraie adresse ADMIN_EMAIL dans backend/.env avant le seed.');
+    throw new Error('Définissez une vraie variable d’environnement ADMIN_EMAIL avant le seed.');
   }
 
   if (!password || password.length < 8 || /change-this|placeholder|replace-me/i.test(password)) {
     throw new Error(
-      'Définissez un ADMIN_PASSWORD d’au moins 8 caractères dans backend/.env avant le seed.',
+      'Définissez une variable d’environnement ADMIN_PASSWORD d’au moins 8 caractères avant le seed.',
     );
   }
 

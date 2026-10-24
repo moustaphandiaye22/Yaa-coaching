@@ -29,4 +29,4 @@ COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npm run prisma:deploy --workspace backend && npm run prisma:seed --workspace backend && npm run start --workspace backend"]
+CMD ["sh", "-c", "npm run prisma:deploy --workspace backend && npm run start --workspace backend"]
