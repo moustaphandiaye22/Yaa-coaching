@@ -18,11 +18,6 @@ export function assertProductionPrivacyConfiguration(): void {
   if (process.env.NODE_ENV !== 'production') return;
   if (!process.env.DATA_ENCRYPTION_KEY)
     throw new Error('DATA_ENCRYPTION_KEY est obligatoire en production.');
-  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM || !process.env.NOTIFICATION_EMAIL) {
-    throw new Error(
-      'RESEND_API_KEY, EMAIL_FROM et NOTIFICATION_EMAIL sont obligatoires en production.',
-    );
-  }
   configuredDays('SUBMISSION_RETENTION_DAYS', 365);
   configuredDays('REVIEW_EMAIL_RETENTION_DAYS', 90);
 }
