@@ -1,46 +1,25 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "services": {
-    "backend": {
-      "root": "backend",
-      "framework": "express",
-      "entrypoint": "src/server.ts",
-      "buildCommand": "npm run build"
-    },
-    "frontend": {
-      "root": "frontend",
-      "framework": "vite",
-      "buildCommand": "npm run build",
-      "rewrites": [
-        {
-          "source": "/favicon.ico",
-          "destination": "/favicon.svg"
-        },
-        {
-          "source": "/(.*)",
-          "destination": "/index.html"
-        }
-      ]
-    }
-  },
+  "framework": "vite",
+  "installCommand": "npm ci --include=dev",
+  "buildCommand": "npm run build --workspace frontend",
+  "outputDirectory": "frontend/dist",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": {
-        "service": "backend"
-      }
+      "source": "/api/:path*",
+      "destination": "https://yaa-coaching.onrender.com/api/:path*"
     },
     {
-      "source": "/media/(.*)",
-      "destination": {
-        "service": "backend"
-      }
+      "source": "/media/:path*",
+      "destination": "https://yaa-coaching.onrender.com/media/:path*"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/favicon.svg"
     },
     {
       "source": "/(.*)",
-      "destination": {
-        "service": "frontend"
-      }
+      "destination": "/index.html"
     }
   ]
 }
