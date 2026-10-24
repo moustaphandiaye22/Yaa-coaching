@@ -13,6 +13,7 @@ import {
   Inbox,
   LogOut,
   MapPin,
+  Menu,
   ListChecks,
   BookOpen,
   UserRound,
@@ -154,6 +155,7 @@ function Admin({ onNavigate }: AdminProps) {
   const [reviewStatusFilter, setReviewStatusFilter] = useState('');
   const [faqSearch, setFaqSearch] = useState('');
   const [faqVisibilityFilter, setFaqVisibilityFilter] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const submissionRouteId =
     window.location.pathname.match(/^\/admin\/demandes\/([^/]+)$/)?.[1] ?? '';
   const adminRouteTab = window.location.pathname.match(/^\/admin\/(avis|notifications)$/)?.[1];
@@ -290,21 +292,37 @@ function Admin({ onNavigate }: AdminProps) {
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
-        <a
-          className="brand"
-          href="/"
-          onClick={(e) => {
-            e.preventDefault();
-            onNavigate('/');
-          }}
+        <div className="admin-sidebar-header">
+          <a
+            className="brand"
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavigate('/');
+            }}
+          >
+            <span className="brand-mark">Y</span>
+            <span>
+              <b>YAA COACHING</b>
+              <small>ESPACE ADMIN</small>
+            </span>
+          </a>
+          <button
+            className="admin-sidebar-toggle"
+            type="button"
+            aria-label={mobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="admin-navigation"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+        <nav
+          className={`admin-menu${mobileMenuOpen ? ' is-open' : ''}`}
+          id="admin-navigation"
+          aria-label="Navigation administration"
         >
-          <span className="brand-mark">Y</span>
-          <span>
-            <b>YAA COACHING</b>
-            <small>ESPACE ADMIN</small>
-          </span>
-        </a>
-        <nav className="admin-menu" aria-label="Navigation administration">
           {[
             {
               title: 'ACTIVITÉ',
@@ -349,6 +367,7 @@ function Admin({ onNavigate }: AdminProps) {
                   aria-current={tab === id ? 'page' : undefined}
                   onClick={() => {
                     setTab(id);
+                    setMobileMenuOpen(false);
                     setError('');
                     setNotice('');
                     if (submissionRouteId) onNavigate('/admin');
