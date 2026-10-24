@@ -9,8 +9,7 @@ RUN npm ci --include=dev
 
 COPY backend ./backend
 COPY frontend ./frontend
-RUN npm run prisma:generate --workspace backend \
-    && npm run build --workspace backend
+RUN npm run build --workspace backend
 
 FROM node:22-alpine AS production
 
@@ -21,7 +20,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY backend/package.json ./backend/package.json
 COPY frontend/package.json ./frontend/package.json
-RUN npm ci --omit=dev --workspace backend \
+RUN npm ci --include=dev --workspace backend \
     && npm cache clean --force
 
 COPY --from=build /app/backend/dist ./backend/dist
