@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import {
-  ArrowDown,
   ArrowUpRight,
   CircleAlert,
   CircleCheck,
@@ -78,6 +77,10 @@ function PublicSite({
   const servicesBlock = contentFor('services');
   const servicesSection = (servicesBlock.section ?? {}) as Record<string, unknown>;
   const closingContent = contentFor('closing');
+  const closingValue = (key: string, fallback: string) => {
+    const value = closingContent[key];
+    return typeof value === 'string' && value.trim() ? value : fallback;
+  };
 
   useEffect(() => {
     document.title = `${pageTitle} — YAA COACHING`;
@@ -205,14 +208,10 @@ function PublicSite({
               </div>
             </div>
             <div className="hero-bottom">
-              <span>01 / 04</span>
               <span>
                 BOUGER AVEC CONFIANCE <i /> COMPRENDRE SON FONCTIONNEMENT <i /> CHOISIR SES
                 OBJECTIFS <i /> DEVENIR AUTONOME
               </span>
-              <a href="/accompagnements" aria-label="Défiler vers les accompagnements">
-                <ArrowDown size={15} />
-              </a>
             </div>
           </section>
         )}
@@ -253,9 +252,6 @@ function PublicSite({
                         />
                       )}
                       <span className="image-count">0{i + 1} / 03</span>
-                      {photo?.url.startsWith('/images/') && (
-                        <span className="image-disclaimer">VISUEL D’ILLUSTRATION</span>
-                      )}
                       <span className="service-icon">
                         {i === 0 ? (
                           <Dumbbell size={18} />
@@ -414,9 +410,6 @@ function PublicSite({
                 <div className="editorial-image-placeholder coach-placeholder" aria-hidden="true" />
               )}
               <span className="coach-seal">{String(coachContent.photoSeal ?? '')}</span>
-              {mediaFor('YAA COACHING')?.url.startsWith('/images/') && (
-                <span className="coach-image-disclaimer">Illustration générée par IA</span>
-              )}
               <span className="coach-caption">
                 {String(coachContent.photoCaption ?? '')}{' '}
                 <small>{String(coachContent.photoLocation ?? '')}</small>
@@ -520,16 +513,36 @@ function PublicSite({
         {show('galerie') && <GallerySection />}
         {show('avis') && <ReviewsSection onNotice={notify} />}
         {show('avis') && <FaqSection />}
-        {show('home') && contentStatus === 'ready' && (
-          <section className="closing-cta">
-            <p className="eyebrow">{String(closingContent.eyebrow ?? '')}</p>
-            <h2 className="copy-preserve-lines">
-              {String(closingContent.title ?? '')}
+        {show(
+          'home',
+          'accompagnements',
+          'methode',
+          'coach',
+          'galerie',
+          'avis',
+          'questionnaire',
+        ) && (
+          <section className="closing-cta" aria-labelledby="public-closing-title">
+            <p className="eyebrow">{closingValue('eyebrow', 'UN PREMIER ÉCHANGE')}</p>
+            <h2 className="copy-preserve-lines" id="public-closing-title">
+              {closingValue('title', 'Votre premier pas vers le changement')}
               <br />
-              <em>{String(closingContent.accent ?? '')}</em>
+              <em>{closingValue('accent', 'commence ici.')}</em>
             </h2>
-            <a className="button button-cream" href="/questionnaire">
-              {String(closingContent.buttonLabel ?? '')} <ArrowUpRight size={16} />
+            <a
+              className="button button-cream"
+              href={show('questionnaire') ? '#questionnaire' : '/questionnaire'}
+              onClick={
+                show('questionnaire')
+                  ? undefined
+                  : (event) => {
+                      event.preventDefault();
+                      startQuestionnaire();
+                    }
+              }
+            >
+              {closingValue('buttonLabel', 'Faire le premier pas')}{' '}
+              <ArrowUpRight size={16} />
             </a>
             <span className="closing-star" aria-hidden="true">
               <Sparkles size={38} strokeWidth={1.2} />

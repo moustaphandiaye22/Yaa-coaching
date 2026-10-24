@@ -1,12 +1,38 @@
-import type { PrismaClient } from '@prisma/client';
-import type { DispatchableNotification, NotificationRepository } from '../domain/notification.js';
+import type { Prisma, PrismaClient } from '@prisma/client';
+import type {
+  DispatchableNotification,
+  NotificationListFilter,
+  NotificationRepository,
+} from '../domain/notification.js';
 
 export class PrismaNotificationRepository implements NotificationRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async list(page: number, size: number) {
+  async list(page: number, size: number, filter: NotificationListFilter = {}) {
+    const statusWhere: Prisma.NotificationWhereInput | undefined =
+      filter.status === 'SENT'
+        ? { sentAt: { not: null } }
+        : filter.status === 'FAILED'
+          ? { sentAt: null, lastError: { not: null } }
+          : filter.status === 'PENDING'
+            ? { sentAt: null, lastError: null }
+            : undefined;
+    const queryWhere: Prisma.NotificationWhereInput | undefined = filter.query
+      ? {
+          OR: [
+            { lastError: { contains: filter.query, mode: 'insensitive' } },
+            ...(filter.matchingKinds?.length ? [{ kind: { in: filter.matchingKinds } }] : []),
+          ],
+        }
+      : undefined;
+    const where: Prisma.NotificationWhereInput = {
+      AND: [statusWhere, queryWhere].filter(
+        (condition): condition is Prisma.NotificationWhereInput => Boolean(condition),
+      ),
+    };
     const [items, total] = await Promise.all([
       this.prisma.notification.findMany({
+        where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * size,
         take: size,
@@ -19,7 +45,7 @@ export class PrismaNotificationRepository implements NotificationRepository {
           createdAt: true,
         },
       }),
-      this.prisma.notification.count(),
+      this.prisma.notification.count({ where }),
     ]);
     return { items, total };
   }

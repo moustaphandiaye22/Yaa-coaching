@@ -25,6 +25,7 @@ export default function QuestionnaireSection({
     step,
     setStep,
     answers,
+    fieldErrors,
     submitting,
     questionnaireError,
     reloadQuestionnaire,
@@ -46,6 +47,20 @@ export default function QuestionnaireSection({
   function field(question: Question) {
     const value = answers[question.key] ?? '';
     const id = `question-${question.key}`;
+    const error = fieldErrors[question.key];
+    const isNumber = question.key === 'age' || question.type === 'number';
+    const type = question.key === 'age' ? 'number' : question.type;
+    const minLength = ['firstName', 'representative', 'city'].includes(question.key)
+      ? 2
+      : undefined;
+    const maxLength =
+      question.key === 'contactEmail'
+        ? 254
+        : question.key === 'contactPhone'
+          ? 40
+          : ['firstName', 'representative', 'city'].includes(question.key)
+            ? 100
+            : 5000;
     const label = (
       <span>
         {question.label}
@@ -53,11 +68,20 @@ export default function QuestionnaireSection({
       </span>
     );
 
-    if (question.type === 'multi') {
+    if (type === 'multi') {
       return (
-        <div key={question.key} className="field">
+        <div key={question.key} className={`field field-wide ${error ? 'has-error' : ''}`}>
           <span id={`${id}-label`}>{label}</span>
-          <div className="choice-list" role="group" aria-labelledby={`${id}-label`}>
+          <div
+            className="choice-list"
+            id={id}
+            role="group"
+            aria-labelledby={`${id}-label`}
+            aria-describedby={error ? `${id}-error` : undefined}
+            aria-invalid={error ? true : undefined}
+            aria-required={questionIsRequired(question)}
+            tabIndex={-1}
+          >
             {question.options?.map((option) => {
               const selected = Array.isArray(value) && value.includes(option);
               return (
@@ -86,6 +110,11 @@ export default function QuestionnaireSection({
               {Array.isArray(value) ? value.length : 0}/{question.max} sélection(s)
             </small>
           </div>
+          {error && (
+            <small className="questionnaire-field-error" id={`${id}-error`} role="alert">
+              {error}
+            </small>
+          )}
         </div>
       );
     }
@@ -93,22 +122,30 @@ export default function QuestionnaireSection({
     return (
       <label
         key={question.key}
-        className={`field ${question.type === 'textarea' ? 'field-wide' : ''}`}
+        className={`field ${type === 'textarea' ? 'field-wide' : ''} ${error ? 'has-error' : ''}`}
         htmlFor={id}
       >
         {label}
-        {question.type === 'textarea' ? (
+        {type === 'textarea' ? (
           <textarea
             id={id}
             value={String(value)}
+            required={questionIsRequired(question)}
+            minLength={minLength}
+            maxLength={maxLength}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? `${id}-error` : undefined}
             onChange={(event) => update(question.key, event.target.value)}
             rows={3}
             placeholder="Votre réponse..."
           />
-        ) : question.type === 'select' ? (
+        ) : type === 'select' ? (
           <select
             id={id}
             value={String(value)}
+            required={questionIsRequired(question)}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? `${id}-error` : undefined}
             onChange={(event) => update(question.key, event.target.value)}
           >
             <option value="">Choisissez une réponse</option>
@@ -121,11 +158,39 @@ export default function QuestionnaireSection({
         ) : (
           <input
             id={id}
-            type={question.type === 'email' ? 'email' : question.type === 'tel' ? 'tel' : 'text'}
+            type={
+              question.type === 'email'
+                ? 'email'
+                : question.type === 'tel'
+                  ? 'tel'
+                  : isNumber
+                    ? 'number'
+                    : 'text'
+            }
+            min={isNumber ? (question.min ?? (question.key === 'age' ? 1 : undefined)) : undefined}
+            max={
+              isNumber
+                ? (question.maxValue ?? (question.key === 'age' ? 120 : undefined))
+                : undefined
+            }
+            step={
+              isNumber ? (question.step ?? (question.key === 'age' ? 1 : undefined)) : undefined
+            }
+            inputMode={isNumber ? 'numeric' : undefined}
             value={String(value)}
+            required={questionIsRequired(question)}
+            minLength={minLength}
+            maxLength={isNumber ? undefined : maxLength}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? `${id}-error` : undefined}
             onChange={(event) => update(question.key, event.target.value)}
             placeholder={question.type === 'email' ? 'vous@exemple.fr' : ''}
           />
+        )}
+        {error && (
+          <small className="questionnaire-field-error" id={`${id}-error`} role="alert">
+            {error}
+          </small>
         )}
       </label>
     );
@@ -241,31 +306,64 @@ export default function QuestionnaireSection({
             {visibleQuestions(currentQuestions).map(field)}
             {step === 4 && (
               <>
-                <label className="consent-row">
-                  <input
-                    type="checkbox"
-                    checked={answers.consent === 'yes'}
-                    onChange={(event) => update('consent', event.target.checked ? 'yes' : '')}
-                  />
-                  <span>
-                    J’accepte que mes réponses soient transmises au coach pour être recontacté·e au
-                    sujet de cette demande. <b>*</b>
-                  </span>
-                </label>
-                {isMinor && (
-                  <label className="consent-row guardian-consent">
+                <div className="consent-field field-wide">
+                  <label className="consent-row" htmlFor="question-consent">
                     <input
+                      id="question-consent"
                       type="checkbox"
-                      checked={answers.guardianConsent === 'yes'}
-                      onChange={(event) =>
-                        update('guardianConsent', event.target.checked ? 'yes' : '')
-                      }
+                      checked={answers.consent === 'yes'}
+                      aria-invalid={fieldErrors.consent ? true : undefined}
+                      aria-describedby={fieldErrors.consent ? 'question-consent-error' : undefined}
+                      onChange={(event) => update('consent', event.target.checked ? 'yes' : '')}
                     />
                     <span>
-                      En tant que parent ou responsable légal, j’autorise l’envoi de cette demande
-                      concernant une personne mineure. <b>*</b>
+                      J’accepte que mes réponses soient transmises au coach pour être recontacté·e
+                      au sujet de cette demande. <b>*</b>
                     </span>
                   </label>
+                  {fieldErrors.consent && (
+                    <small
+                      className="questionnaire-field-error"
+                      id="question-consent-error"
+                      role="alert"
+                    >
+                      {fieldErrors.consent}
+                    </small>
+                  )}
+                </div>
+                {isMinor && (
+                  <div className="consent-field field-wide">
+                    <label
+                      className="consent-row guardian-consent"
+                      htmlFor="question-guardianConsent"
+                    >
+                      <input
+                        id="question-guardianConsent"
+                        type="checkbox"
+                        checked={answers.guardianConsent === 'yes'}
+                        aria-invalid={fieldErrors.guardianConsent ? true : undefined}
+                        aria-describedby={
+                          fieldErrors.guardianConsent ? 'question-guardianConsent-error' : undefined
+                        }
+                        onChange={(event) =>
+                          update('guardianConsent', event.target.checked ? 'yes' : '')
+                        }
+                      />
+                      <span>
+                        En tant que parent ou responsable légal, j’autorise l’envoi de cette demande
+                        concernant une personne mineure. <b>*</b>
+                      </span>
+                    </label>
+                    {fieldErrors.guardianConsent && (
+                      <small
+                        className="questionnaire-field-error"
+                        id="question-guardianConsent-error"
+                        role="alert"
+                      >
+                        {fieldErrors.guardianConsent}
+                      </small>
+                    )}
+                  </div>
                 )}
               </>
             )}

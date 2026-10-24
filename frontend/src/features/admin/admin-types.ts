@@ -9,6 +9,9 @@ export type Submission = {
   createdAt: string;
   answers?: Record<string, unknown>;
   internalNotes?: string;
+  consentAt?: string;
+  guardianConsentAt?: string | null;
+  history?: { id: string; action: string; details?: string | null; occurredAt: string }[];
 };
 
 export type ReviewAdmin = {

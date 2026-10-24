@@ -1,11 +1,21 @@
 export type NotificationKind = 'SUBMISSION_RECEIVED' | 'SUBMISSION_RECEIPT';
+export type NotificationListStatus = 'PENDING' | 'FAILED' | 'SENT';
+export type NotificationListFilter = {
+  status?: NotificationListStatus;
+  query?: string;
+  matchingKinds?: NotificationKind[];
+};
 
 export interface NotificationDispatcher {
   dispatchPending(limit?: number): Promise<number>;
 }
 
 export interface NotificationRepository {
-  list(page: number, size: number): Promise<{ items: unknown[]; total: number }>;
+  list(
+    page: number,
+    size: number,
+    filter?: NotificationListFilter,
+  ): Promise<{ items: unknown[]; total: number }>;
   resetFailed(): Promise<void>;
   findPending(now: Date, limit: number): Promise<DispatchableNotification[]>;
   claim(id: string, now: Date): Promise<boolean>;

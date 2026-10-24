@@ -17,12 +17,18 @@ export function createAdminNotificationRouter(
     asyncHandler(async (request, response) => {
       const page = Number(request.query.page ?? 1);
       const size = Number(request.query.size ?? 20);
+      const status = typeof request.query.status === 'string' ? request.query.status : undefined;
+      const query = typeof request.query.q === 'string' ? request.query.q : undefined;
       try {
-        const result = await service.list(page, size);
+        const result = await service.list(page, size, { status, query });
         response.json({ ...result, page, size });
       } catch (error) {
         if (error instanceof Error && error.message === 'NOTIFICATION_PAGINATION_INVALID') {
           response.status(400).json({ error: 'Pagination invalide.' });
+          return;
+        }
+        if (error instanceof Error && error.message === 'NOTIFICATION_FILTER_INVALID') {
+          response.status(400).json({ error: 'Filtre ou recherche invalide.' });
           return;
         }
         throw error;

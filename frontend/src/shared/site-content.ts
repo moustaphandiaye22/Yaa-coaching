@@ -3,8 +3,11 @@ export type Answers = Record<string, string | string[]>;
 export type Question = {
   key: string;
   label: string;
-  type?: 'text' | 'textarea' | 'select' | 'multi' | 'email' | 'tel';
+  type?: 'text' | 'textarea' | 'select' | 'multi' | 'email' | 'tel' | 'number';
   required?: boolean;
+  min?: number;
+  maxValue?: number;
+  step?: number;
   options?: string[];
   max?: number;
   condition?: [string, string] | { key: string; equals?: string; notEquals?: string };

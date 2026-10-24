@@ -1,5 +1,7 @@
 import { ArrowUpRight } from 'lucide-react';
 import type { Submission } from './admin-types.js';
+import AdminListToolbar from './AdminListToolbar.js';
+import AdminPagination from './AdminPagination.js';
 
 type Props = {
   counts: { NEW: number; PENDING: number };
@@ -54,48 +56,36 @@ export default function AdminSubmissionsPanel({
           <small>Résultats</small>
         </article>
       </div>
-      <div className="admin-toolbar">
-        <div className="admin-tabs">
-          <button
-            className={!statusFilter ? 'active' : ''}
-            onClick={() => {
+      <AdminListToolbar
+        searchLabel="Rechercher une demande"
+        searchPlaceholder="Nom, ville, accompagnement, e-mail…"
+        searchValue={query}
+        onSearchChange={(value) => {
+          onPageChange(1);
+          onQueryChange(value);
+        }}
+        resultCount={total}
+        resultLabel={total === 1 ? 'demande' : 'demandes'}
+        filters={[
+          {
+            label: 'Statut',
+            value: statusFilter,
+            onChange: (value) => {
               onPageChange(1);
-              onStatusFilterChange('');
-            }}
-          >
-            Toutes
-          </button>
-          {[
-            ['NEW', 'Nouvelles'],
-            ['TO_CONTACT', 'À contacter'],
-            ['CONTACTED', 'Contactées'],
-            ['IN_PROGRESS', 'En cours'],
-            ['CLOSED', 'Clôturées'],
-            ['REJECTED', 'Refusées'],
-          ].map(([s, l]) => (
-            <button
-              key={s}
-              className={statusFilter === s ? 'active' : ''}
-              onClick={() => {
-                onPageChange(1);
-                onStatusFilterChange(s);
-              }}
-            >
-              {l}
-            </button>
-          ))}
-        </div>
-        <input
-          type="search"
-          aria-label="Rechercher une demande"
-          placeholder="Rechercher une personne, une ville..."
-          value={query}
-          onChange={(e) => {
-            onPageChange(1);
-            onQueryChange(e.target.value);
-          }}
-        />
-      </div>
+              onStatusFilterChange(value);
+            },
+            options: [
+              { value: '', label: 'Tous les statuts' },
+              { value: 'NEW', label: 'Nouvelles' },
+              { value: 'TO_CONTACT', label: 'À contacter' },
+              { value: 'CONTACTED', label: 'Contactées' },
+              { value: 'IN_PROGRESS', label: 'En cours' },
+              { value: 'CLOSED', label: 'Clôturées' },
+              { value: 'REJECTED', label: 'Refusées' },
+            ],
+          },
+        ]}
+      />
       <div className="admin-table-wrap">
         <table>
           <thead>
@@ -110,12 +100,29 @@ export default function AdminSubmissionsPanel({
           </thead>
           <tbody>
             {items.map((x) => (
-              <tr key={x.id}>
+              <tr
+                key={x.id}
+                tabIndex={0}
+                aria-label={`Ouvrir le dossier de ${x.contactName}`}
+                onClick={() => onSelect(x)}
+                onKeyDown={(event) => {
+                  if (
+                    event.target === event.currentTarget &&
+                    (event.key === 'Enter' || event.key === ' ')
+                  ) {
+                    event.preventDefault();
+                    onSelect(x);
+                  }
+                }}
+              >
                 <td>
                   <button
                     className="admin-row-open"
                     type="button"
-                    onClick={() => onSelect(x)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onSelect(x);
+                    }}
                     aria-label={`Ouvrir le dossier de ${x.contactName}`}
                   >
                     <b>{x.contactName}</b>
@@ -141,27 +148,12 @@ export default function AdminSubmissionsPanel({
           <div className="admin-empty">Aucune demande ne correspond à ces filtres.</div>
         )}
       </div>
-      <div className="admin-pagination">
-        <span>
-          Page {page} · {total} résultat{total === 1 ? '' : 's'}
-        </span>
-        <button
-          type="button"
-          className="button button-light"
-          disabled={page <= 1}
-          onClick={() => onPageChange((p) => Math.max(1, p - 1))}
-        >
-          Précédente
-        </button>
-        <button
-          type="button"
-          className="button button-light"
-          disabled={page * 50 >= total}
-          onClick={() => onPageChange((p) => p + 1)}
-        >
-          Suivante
-        </button>
-      </div>
+      <AdminPagination
+        page={page}
+        total={total}
+        resultLabel={total === 1 ? 'demande' : 'demandes'}
+        onPageChange={(nextPage) => onPageChange(nextPage)}
+      />
     </>
   );
 }

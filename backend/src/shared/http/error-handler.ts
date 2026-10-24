@@ -3,7 +3,17 @@ import { Prisma } from '@prisma/client';
 
 export const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
   void _next;
-  console.error('API error:', error instanceof Error ? error.name : 'unknown');
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    console.error('API error:', {
+      name: error.name,
+      code: error.code,
+      meta: error.meta,
+    });
+  } else {
+    console.error('API error:', {
+      name: error instanceof Error ? error.name : 'unknown',
+    });
+  }
   if (error instanceof SyntaxError && 'status' in error && error.status === 400) {
     response.status(400).json({ error: 'Corps JSON invalide.' });
     return;
@@ -13,6 +23,12 @@ export const errorHandler: ErrorRequestHandler = (error, _request, response, _ne
     return;
   }
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === 'P2021' || error.code === 'P2022') {
+      response.status(503).json({
+        error: 'La base de données doit être mise à jour. Appliquez les migrations puis réessayez.',
+      });
+      return;
+    }
     if (error.code === 'P2025') {
       response.status(404).json({ error: 'Ressource introuvable.' });
       return;

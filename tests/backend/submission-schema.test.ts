@@ -8,7 +8,7 @@ const adultSubmission = {
   answers: {
     approach: 'Pour moi-même',
     firstName: 'Awa',
-    age: '30–49 ans',
+    age: '35',
     city: 'Vierzon',
     situation: 'Commencer une activité',
     difficulties: 'Je souhaite reprendre doucement une activité.',
@@ -32,7 +32,7 @@ describe('public submission validation', () => {
         ...adultSubmission.answers,
         approach: 'Pour mon enfant',
         firstName: 'Ibrahima',
-        age: 'Moins de 18 ans',
+        age: '16',
       },
     };
 
@@ -49,5 +49,38 @@ describe('public submission validation', () => {
     };
 
     expect(createSubmissionSchema.safeParse(submission).success).toBe(false);
+  });
+
+  it('validates numeric answers and requires details for a yes answer', () => {
+    const invalidAge = {
+      ...adultSubmission,
+      answers: { ...adultSubmission.answers, age: '121' },
+    };
+    const missingDetails = {
+      ...adultSubmission,
+      answers: { ...adultSubmission.answers, pastSupport: 'Oui' },
+    };
+
+    expect(createSubmissionSchema.safeParse(invalidAge).success).toBe(false);
+    expect(createSubmissionSchema.safeParse(missingDetails).success).toBe(false);
+  });
+
+  it('validates conditional numeric and yes/no answers used by the five-step form', () => {
+    const invalidWeeklyMatches = {
+      ...adultSubmission,
+      answers: { ...adultSubmission.answers, weeklyMatches: '15' },
+    };
+    const missingKilos = {
+      ...adultSubmission,
+      answers: { ...adultSubmission.answers, weightLoss: 'Oui' },
+    };
+    const missingSharedExpectations = {
+      ...adultSubmission,
+      answers: { ...adultSubmission.answers, expectationsShared: 'Oui' },
+    };
+
+    expect(createSubmissionSchema.safeParse(invalidWeeklyMatches).success).toBe(false);
+    expect(createSubmissionSchema.safeParse(missingKilos).success).toBe(false);
+    expect(createSubmissionSchema.safeParse(missingSharedExpectations).success).toBe(false);
   });
 });

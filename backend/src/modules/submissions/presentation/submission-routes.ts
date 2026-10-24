@@ -6,9 +6,13 @@ import type { SubmitSubmission } from '../application/submit-submission.js';
 import { submissionStatuses } from '../domain/submission-status.js';
 import { createSubmissionSchema, updateSubmissionSchema } from './submission-schemas.js';
 import { ManageSubmissions } from '../application/manage-submissions.js';
+import { ExportSubmissionPdf } from '../application/export-submission-pdf.js';
 import { validationResponse } from '../../../shared/http/validation-response.js';
 
-export function createPublicSubmissionRouter(submitSubmission: SubmitSubmission) {
+export function createPublicSubmissionRouter(
+  submitSubmission: SubmitSubmission,
+  readQuestionnaire?: (service: string) => Promise<unknown>,
+) {
   const router = Router();
 
   router.post(
@@ -44,6 +48,64 @@ export function createPublicSubmissionRouter(submitSubmission: SubmitSubmission)
         );
         return;
       }
+      if (readQuestionnaire) {
+        const questionnaire = await readQuestionnaire(parsed.data.service);
+        const questionnaireRecord =
+          questionnaire && typeof questionnaire === 'object'
+            ? (questionnaire as Record<string, unknown>)
+            : {};
+        const answers = parsed.data.answers;
+        const steps = Array.isArray(questionnaireRecord.steps) ? questionnaireRecord.steps : [];
+        const fields: Record<string, string[]> = {};
+
+        for (const step of steps) {
+          const questions =
+            step &&
+            typeof step === 'object' &&
+            Array.isArray((step as { questions?: unknown }).questions)
+              ? (step as { questions: unknown[] }).questions
+              : [];
+          for (const question of questions) {
+            if (!question || typeof question !== 'object') continue;
+            const item = question as {
+              key?: unknown;
+              label?: unknown;
+              required?: unknown;
+              condition?: unknown;
+            };
+            if (typeof item.key !== 'string' || item.required !== true) continue;
+            const condition = item.condition;
+            let isVisible = true;
+            if (Array.isArray(condition) && condition.length >= 2) {
+              isVisible = answers[String(condition[0])] !== condition[1];
+            } else if (condition && typeof condition === 'object') {
+              const rule = condition as { key?: unknown; equals?: unknown; notEquals?: unknown };
+              const answer = answers[String(rule.key ?? '')];
+              if (rule.equals !== undefined) isVisible = answer === rule.equals;
+              else if (rule.notEquals !== undefined) isVisible = answer !== rule.notEquals;
+            }
+            if (!isVisible) continue;
+            const answer = answers[item.key];
+            const isEmpty = Array.isArray(answer)
+              ? answer.length === 0
+              : typeof answer !== 'string' || !answer.trim();
+            if (isEmpty) {
+              fields[`answers.${item.key}`] = [
+                `${typeof item.label === 'string' ? item.label : 'Cette question'} : Ce champ est obligatoire.`,
+              ];
+            }
+          }
+        }
+
+        if (Object.keys(fields).length) {
+          response.status(400).json({
+            error:
+              'Votre demande n’a pas été envoyée. Corrigez les champs indiqués puis réessayez.',
+            fields,
+          });
+          return;
+        }
+      }
       const { guardianConsent, consent, website, ...data } = parsed.data;
       void consent;
       void website;
@@ -65,6 +127,7 @@ export function createPublicSubmissionRouter(submitSubmission: SubmitSubmission)
 export function createAdminSubmissionRouter(
   submissions: ManageSubmissions,
   sessionStore: SessionStore,
+  exportSubmissionPdf: ExportSubmissionPdf,
 ) {
   const router = Router();
   const requireAdmin = createRequireAdmin(sessionStore);
@@ -121,13 +184,16 @@ export function createAdminSubmissionRouter(
     '/:id/export',
     requireAdmin,
     asyncHandler(async (request, response) => {
-      const item = await submissions.find(String(request.params.id));
-      if (!item) {
+      const id = String(request.params.id);
+      const pdf = await exportSubmissionPdf.execute(id);
+      if (!pdf) {
         response.status(404).json({ error: 'Demande introuvable.' });
         return;
       }
-      response.setHeader('Content-Disposition', 'attachment; filename="yaa-submission.json"');
-      response.json(item);
+      response.setHeader('Content-Type', 'application/pdf');
+      response.setHeader('Content-Disposition', 'attachment; filename="yaa-coaching-dossier.pdf"');
+      response.setHeader('Cache-Control', 'private, no-store');
+      response.send(Buffer.from(pdf));
     }),
   );
 
@@ -165,9 +231,10 @@ export function createSubmissionRouter(
   submitSubmission: SubmitSubmission,
   submissions: ManageSubmissions,
   sessionStore: SessionStore,
+  exportSubmissionPdf: ExportSubmissionPdf,
 ) {
   const router = Router();
   router.use('/public', createPublicSubmissionRouter(submitSubmission));
-  router.use('/admin', createAdminSubmissionRouter(submissions, sessionStore));
+  router.use('/admin', createAdminSubmissionRouter(submissions, sessionStore, exportSubmissionPdf));
   return router;
 }

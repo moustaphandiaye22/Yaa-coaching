@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ImagePlus, Trash2, Upload } from 'lucide-react';
 import { mediaUrl } from '../../shared/site-content.js';
 import { requestJson } from '../../shared/api-client.js';
 import type { AdminApi } from '../../shared/api-client.js';
 import { useServiceCatalog } from '../../shared/service-catalog.js';
+import AdminListToolbar from './AdminListToolbar.js';
+import { matchesAdminSearch } from './admin-list-utils.js';
 
 type MediaItem = {
   id: string;
@@ -28,7 +30,20 @@ export default function AdminMediaPanel({ api, onError, onSuccess }: Props) {
   const [alt, setAlt] = useState('');
   const [caption, setCaption] = useState('');
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
+  const [kindFilter, setKindFilter] = useState('');
+  const [publicationFilter, setPublicationFilter] = useState('');
   const services = useServiceCatalog();
+  const filteredItems = useMemo(
+    () =>
+      items.filter(
+        (item) =>
+          (!kindFilter || item.kind === kindFilter) &&
+          (publicationFilter === '' || item.published === (publicationFilter === 'published')) &&
+          matchesAdminSearch(search, item.service, item.alt, item.caption, item.kind),
+      ),
+    [items, kindFilter, publicationFilter, search],
+  );
 
   const load = useCallback(async () => {
     const result: MediaItem[] = await api('/api/admin/media');
@@ -193,11 +208,46 @@ export default function AdminMediaPanel({ api, onError, onSuccess }: Props) {
         </button>
       </form>
 
-      {items.length === 0 ? (
-        <div className="admin-empty">Aucun média n’a encore été ajouté.</div>
+      <AdminListToolbar
+        searchLabel="Rechercher dans les médias"
+        searchPlaceholder="Légende, texte alternatif, accompagnement…"
+        searchValue={search}
+        onSearchChange={setSearch}
+        resultCount={filteredItems.length}
+        resultLabel="média(s)"
+        filters={[
+          {
+            label: 'Type',
+            value: kindFilter,
+            onChange: setKindFilter,
+            options: [
+              { value: '', label: 'Tous les types' },
+              { value: 'PHOTO', label: 'Photos' },
+              { value: 'VIDEO', label: 'Vidéos' },
+            ],
+          },
+          {
+            label: 'Publication',
+            value: publicationFilter,
+            onChange: setPublicationFilter,
+            options: [
+              { value: '', label: 'Tous' },
+              { value: 'published', label: 'Publiés' },
+              { value: 'draft', label: 'Brouillons' },
+            ],
+          },
+        ]}
+      />
+
+      {filteredItems.length === 0 ? (
+        <div className="admin-empty">
+          {items.length
+            ? 'Aucun média ne correspond à la recherche et aux filtres sélectionnés.'
+            : 'Aucun média n’a encore été ajouté.'}
+        </div>
       ) : (
         <div className="admin-media-grid">
-          {items.map((item) => (
+          {filteredItems.map((item) => (
             <article key={item.id} className="admin-media-card">
               <div className="admin-media-preview">
                 {item.kind === 'PHOTO' ? (

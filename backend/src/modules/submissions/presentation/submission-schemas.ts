@@ -27,6 +27,56 @@ const answersSchema = z
         });
       }
     }
+    const requiredWhenYes = [
+      ['expectationsShared', 'expectationsSharedDetails'],
+      ['deadline', 'deadlineDetails'],
+      ['pastSupport', 'pastSupportDetails'],
+    ] as const;
+    for (const [question, details] of requiredWhenYes) {
+      if (
+        answers[question] === 'Oui' &&
+        (typeof answers[details] !== 'string' || !answers[details].trim())
+      ) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [details],
+          message: 'Cette précision est requise lorsque vous répondez oui.',
+        });
+      }
+    }
+    const numericRanges = [
+      ['age', 1, 120],
+      ['kilos', 1, 300],
+      ['footballRhythm', 0, 14],
+      ['weeklyMatches', 0, 14],
+    ] as const;
+    for (const [key, minimum, maximum] of numericRanges) {
+      const value = answers[key];
+      const required = key === 'age' || (key === 'kilos' && answers.weightLoss === 'Oui');
+      if (value === undefined || value === '') {
+        if (required) {
+          context.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [key],
+            message: 'Cette réponse chiffrée est requise.',
+          });
+        }
+        continue;
+      }
+      const number = typeof value === 'string' ? Number(value) : Number.NaN;
+      if (
+        !Number.isInteger(number) ||
+        number < minimum ||
+        number > maximum ||
+        (key === 'kilos' && answers.weightLoss !== 'Oui')
+      ) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: `Saisissez un nombre entier entre ${minimum} et ${maximum}.`,
+        });
+      }
+    }
     for (const key of ['priorities', 'playerPriorities']) {
       if (Array.isArray(answers[key]) && answers[key].length > 3) {
         context.addIssue({
@@ -63,7 +113,7 @@ export const createSubmissionSchema = z
           'Le premier contact doit être le proche ou le responsable qui remplit le formulaire.',
       });
     }
-    if (submission.answers.age === 'Moins de 18 ans') {
+    if (Number(submission.answers.age) < 18) {
       if (!submission.guardianConsent) {
         context.addIssue({
           code: z.ZodIssueCode.custom,

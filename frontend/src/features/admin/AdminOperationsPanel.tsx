@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw, ShieldCheck, Trash2, UserPlus } from 'lucide-react';
 import type { AdminApi } from '../../shared/api-client.js';
+import AdminListToolbar from './AdminListToolbar.js';
+import AdminPagination from './AdminPagination.js';
+import { matchesAdminSearch } from './admin-list-utils.js';
 
 type UserRecord = {
   id: string;
@@ -94,21 +97,71 @@ export default function AdminOperationsPanel({ section, api, onError, onSuccess 
   const [passwordDrafts, setPasswordDrafts] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [dispatched, setDispatched] = useState<number | null>(null);
+  const [accountSearch, setAccountSearch] = useState('');
+  const [accountRoleFilter, setAccountRoleFilter] = useState('');
+  const [accountStateFilter, setAccountStateFilter] = useState('');
+  const [notificationSearch, setNotificationSearch] = useState('');
+  const [notificationStateFilter, setNotificationStateFilter] = useState('');
+  const [notificationPage, setNotificationPage] = useState(1);
+  const [notificationTotal, setNotificationTotal] = useState(0);
+  const loadSequence = useRef(0);
+
+  const filteredUsers = useMemo(
+    () =>
+      users.filter(
+        (user) =>
+          (!accountRoleFilter || user.role === accountRoleFilter) &&
+          (accountStateFilter === '' || user.active === (accountStateFilter === 'active')) &&
+          matchesAdminSearch(accountSearch, user.email, user.role),
+      ),
+    [users, accountSearch, accountRoleFilter, accountStateFilter],
+  );
+  const filteredNotifications = useMemo(
+    () =>
+      notifications.filter((notification) => {
+        const state = notification.sentAt ? 'SENT' : notification.lastError ? 'FAILED' : 'PENDING';
+        return (
+          (!notificationStateFilter || state === notificationStateFilter) &&
+          matchesAdminSearch(
+            notificationSearch,
+            notificationLabels[notification.kind] ?? notification.kind,
+            notification.kind,
+            notification.lastError,
+            state === 'SENT' ? 'Envoyée' : state === 'FAILED' ? 'Échec' : 'En attente',
+          )
+        );
+      }),
+    [notifications, notificationSearch, notificationStateFilter],
+  );
 
   const load = useCallback(async () => {
-    if (section === 'comptes') setUsers(await api<UserRecord[]>('/api/admin/users'));
+    const sequence = ++loadSequence.current;
+    if (section === 'comptes') {
+      const result = await api<UserRecord[]>('/api/admin/users');
+      if (sequence === loadSequence.current) setUsers(result);
+    }
     if (section === 'journal') {
       const result = await api<{ items: AuditRecord[]; nextCursor: string | null }>(
         '/api/admin/audit',
       );
-      setAudit(result.items);
-      setCursor(result.nextCursor);
+      if (sequence === loadSequence.current) {
+        setAudit(result.items);
+        setCursor(result.nextCursor);
+      }
     }
     if (section === 'notifications') {
-      const result = await api<{ items: NotificationRecord[] }>('/api/admin/notifications?size=50');
-      setNotifications(result.items);
+      const params = new URLSearchParams({ page: String(notificationPage), size: '50' });
+      if (notificationStateFilter) params.set('status', notificationStateFilter);
+      if (notificationSearch.trim()) params.set('q', notificationSearch.trim());
+      const result = await api<{ items: NotificationRecord[]; total: number }>(
+        `/api/admin/notifications?${params.toString()}`,
+      );
+      if (sequence === loadSequence.current) {
+        setNotifications(result.items);
+        setNotificationTotal(result.total);
+      }
     }
-  }, [api, section]);
+  }, [api, section, notificationPage, notificationStateFilter, notificationSearch]);
 
   async function loadMoreAudit() {
     if (!cursor) return;
@@ -121,6 +174,20 @@ export default function AdminOperationsPanel({ section, api, onError, onSuccess 
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Impossible de charger le journal.');
     }
+  }
+
+  function changeNotificationSearch(value: string) {
+    setNotificationPage(1);
+    setNotificationSearch(value);
+  }
+
+  function changeNotificationStatus(value: string) {
+    setNotificationPage(1);
+    setNotificationStateFilter(value);
+  }
+
+  function changeNotificationPage(page: number) {
+    setNotificationPage(page);
   }
 
   useEffect(() => {
@@ -282,6 +349,36 @@ export default function AdminOperationsPanel({ section, api, onError, onSuccess 
               <UserPlus size={14} /> Créer le compte
             </button>
           </form>
+          <AdminListToolbar
+            searchLabel="Rechercher un compte"
+            searchPlaceholder="Adresse e-mail…"
+            searchValue={accountSearch}
+            onSearchChange={setAccountSearch}
+            resultCount={filteredUsers.length}
+            resultLabel="compte(s)"
+            filters={[
+              {
+                label: 'Rôle',
+                value: accountRoleFilter,
+                onChange: setAccountRoleFilter,
+                options: [
+                  { value: '', label: 'Tous les rôles' },
+                  { value: 'ADMIN', label: 'Administrateurs' },
+                  { value: 'COACH', label: 'Coachs' },
+                ],
+              },
+              {
+                label: 'État',
+                value: accountStateFilter,
+                onChange: setAccountStateFilter,
+                options: [
+                  { value: '', label: 'Tous les états' },
+                  { value: 'active', label: 'Actifs' },
+                  { value: 'inactive', label: 'Désactivés' },
+                ],
+              },
+            ]}
+          />
           <div className="admin-table-wrap">
             <table>
               <thead>
@@ -295,7 +392,7 @@ export default function AdminOperationsPanel({ section, api, onError, onSuccess 
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <tr key={user.id}>
                     <td>
                       <b>{user.email}</b>
@@ -367,7 +464,13 @@ export default function AdminOperationsPanel({ section, api, onError, onSuccess 
                 ))}
               </tbody>
             </table>
-            {!users.length && <div className="admin-empty">Aucun compte.</div>}
+            {!filteredUsers.length && (
+              <div className="admin-empty">
+                {users.length
+                  ? 'Aucun compte ne correspond à la recherche et aux filtres sélectionnés.'
+                  : 'Aucun compte.'}
+              </div>
+            )}
           </div>
         </>
       )}
@@ -425,6 +528,27 @@ export default function AdminOperationsPanel({ section, api, onError, onSuccess 
               {busy ? 'Relance…' : 'Relancer les envois échoués'}
             </button>
           </div>
+          <AdminListToolbar
+            searchLabel="Rechercher une notification"
+            searchPlaceholder="Type, état ou message d’erreur…"
+            searchValue={notificationSearch}
+            onSearchChange={changeNotificationSearch}
+            resultCount={notificationTotal}
+            resultLabel="notification(s)"
+            filters={[
+              {
+                label: 'État',
+                value: notificationStateFilter,
+                onChange: changeNotificationStatus,
+                options: [
+                  { value: '', label: 'Tous les états' },
+                  { value: 'PENDING', label: 'En attente' },
+                  { value: 'FAILED', label: 'En échec' },
+                  { value: 'SENT', label: 'Envoyées' },
+                ],
+              },
+            ]}
+          />
           <div className="admin-table-wrap">
             <table>
               <thead>
@@ -437,7 +561,7 @@ export default function AdminOperationsPanel({ section, api, onError, onSuccess 
                 </tr>
               </thead>
               <tbody>
-                {notifications.map((item) => (
+                {filteredNotifications.map((item) => (
                   <tr key={item.id}>
                     <td>{notificationLabels[item.kind] ?? 'Notification'}</td>
                     <td>{new Date(item.createdAt).toLocaleString('fr-FR')}</td>
@@ -463,8 +587,20 @@ export default function AdminOperationsPanel({ section, api, onError, onSuccess 
                 ))}
               </tbody>
             </table>
-            {!notifications.length && <div className="admin-empty">Aucune notification.</div>}
+            {!filteredNotifications.length && (
+              <div className="admin-empty">
+                {notifications.length
+                  ? 'Aucune notification de cette page ne correspond aux critères.'
+                  : 'Aucune notification.'}
+              </div>
+            )}
           </div>
+          <AdminPagination
+            page={notificationPage}
+            total={notificationTotal}
+            resultLabel={notificationTotal === 1 ? 'notification' : 'notifications'}
+            onPageChange={changeNotificationPage}
+          />
         </>
       )}
     </section>

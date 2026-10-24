@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { ApiError, requestJson } from '../api-client.js';
+import AdminNotificationBell, { type AdminNotificationEvent } from './AdminNotificationBell.js';
 
 type AuthenticatedUser = { email: string; role: string };
 
@@ -40,6 +41,8 @@ export default function SiteHeader({ activeRoute, mobileNavOpen, onToggle, onNav
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [logoutPending, setLogoutPending] = useState(false);
   const [accountError, setAccountError] = useState('');
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [notificationEvents, setNotificationEvents] = useState<AdminNotificationEvent[]>([]);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
   const refreshAccount = useCallback(async () => {
@@ -52,6 +55,46 @@ export default function SiteHeader({ activeRoute, mobileNavOpen, onToggle, onNav
       if (error instanceof ApiError && error.status === 401) setUser(null);
     }
   }, []);
+
+  const refreshNotifications = useCallback(async () => {
+    try {
+      const [audit, newSubmissions, reviews] = await Promise.all([
+        requestJson<{ items: AdminNotificationEvent[]; nextCursor: string | null }>(
+          '/api/admin/audit',
+          { credentials: 'include' },
+        ),
+        requestJson<{ total: number }>('/api/admin/submissions?status=NEW&size=1', {
+          credentials: 'include',
+        }),
+        requestJson<{ status: string }[]>('/api/admin/reviews', { credentials: 'include' }),
+      ]);
+      setNotificationEvents(
+        audit.items.filter((event) =>
+          ['SUBMISSION_CREATED', 'REVIEW_SUBMITTED'].includes(event.action),
+        ),
+      );
+      setNotificationCount(
+        newSubmissions.total + reviews.filter((review) => review.status === 'PENDING').length,
+      );
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        setUser(null);
+        setNotificationCount(0);
+        setNotificationEvents([]);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setNotificationCount(0);
+      setNotificationEvents([]);
+      return;
+    }
+    void refreshNotifications();
+    const interval = window.setInterval(() => void refreshNotifications(), 30_000);
+    return () => window.clearInterval(interval);
+  }, [refreshNotifications, user]);
 
   useEffect(() => {
     void refreshAccount();
@@ -154,45 +197,61 @@ export default function SiteHeader({ activeRoute, mobileNavOpen, onToggle, onNav
           </a>
         ))}
         {user ? (
-          <div className="account-menu" ref={accountMenuRef}>
-            <button
-              className="account-menu-trigger"
-              type="button"
-              aria-expanded={accountMenuOpen}
-              aria-controls="account-menu-panel"
-              onClick={() => setAccountMenuOpen((open) => !open)}
-            >
-              <span className="account-avatar" aria-hidden="true">
-                {accountLabel.slice(0, 1) || 'A'}
-              </span>
-              <span className="account-trigger-name">{accountLabel}</span>
-              <ChevronDown size={15} aria-hidden="true" />
-            </button>
-            {accountMenuOpen && (
-              <div className="account-menu-panel" id="account-menu-panel">
-                <div className="account-menu-identity">
-                  <small>CONNECTÉ EN TANT QUE</small>
-                  <b>{user.email}</b>
-                  <span>Administrateur</span>
+          <>
+            <AdminNotificationBell
+              className="public-notification-center"
+              count={notificationCount}
+              events={notificationEvents}
+              onSelectEvent={(event) => {
+                setAccountMenuOpen(false);
+                if (event.action === 'SUBMISSION_CREATED' && event.entityId) {
+                  onNavigate(`/admin/demandes/${encodeURIComponent(event.entityId)}`);
+                } else {
+                  onNavigate('/admin/avis');
+                }
+              }}
+              onViewAll={() => onNavigate('/admin/notifications')}
+            />
+            <div className="account-menu" ref={accountMenuRef}>
+              <button
+                className="account-menu-trigger"
+                type="button"
+                aria-expanded={accountMenuOpen}
+                aria-controls="account-menu-panel"
+                onClick={() => setAccountMenuOpen((open) => !open)}
+              >
+                <span className="account-avatar" aria-hidden="true">
+                  {accountLabel.slice(0, 1) || 'A'}
+                </span>
+                <span className="account-trigger-name">{accountLabel}</span>
+                <ChevronDown size={15} aria-hidden="true" />
+              </button>
+              {accountMenuOpen && (
+                <div className="account-menu-panel" id="account-menu-panel">
+                  <div className="account-menu-identity">
+                    <small>CONNECTÉ EN TANT QUE</small>
+                    <b>{user.email}</b>
+                    <span>Administrateur</span>
+                  </div>
+                  {accountError && (
+                    <p className="account-menu-error" role="alert">
+                      {accountError}
+                    </p>
+                  )}
+                  <a href="/admin" onClick={(event) => handleNavigate(event, '/admin')}>
+                    <ShieldCheck size={17} /> Espace d’administration
+                  </a>
+                  <a href="/" onClick={(event) => handleNavigate(event, '/')}>
+                    <ExternalLink size={17} /> Retourner au site
+                  </a>
+                  <button type="button" onClick={() => void logout()} disabled={logoutPending}>
+                    <LogOut size={17} />
+                    {logoutPending ? 'Déconnexion…' : 'Se déconnecter'}
+                  </button>
                 </div>
-                {accountError && (
-                  <p className="account-menu-error" role="alert">
-                    {accountError}
-                  </p>
-                )}
-                <a href="/admin" onClick={(event) => handleNavigate(event, '/admin')}>
-                  <ShieldCheck size={17} /> Espace d’administration
-                </a>
-                <a href="/" onClick={(event) => handleNavigate(event, '/')}>
-                  <ExternalLink size={17} /> Retourner au site
-                </a>
-                <button type="button" onClick={() => void logout()} disabled={logoutPending}>
-                  <LogOut size={17} />
-                  {logoutPending ? 'Déconnexion…' : 'Se déconnecter'}
-                </button>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </>
         ) : (
           <a
             className="nav-login"

@@ -19,6 +19,8 @@ import {
 import { PrismaSubmissionRepository } from './modules/submissions/infrastructure/prisma-submission-repository.js';
 import { SubmitSubmission } from './modules/submissions/application/submit-submission.js';
 import { ManageSubmissions } from './modules/submissions/application/manage-submissions.js';
+import { ExportSubmissionPdf } from './modules/submissions/application/export-submission-pdf.js';
+import { SubmissionPdfDocumentRenderer } from './modules/submissions/infrastructure/submission-pdf-renderer.js';
 import {
   createAdminReviewRouter,
   createPublicReviewRouter,
@@ -121,6 +123,7 @@ app.use(
     setHeaders: (response) => {
       response.setHeader('X-Content-Type-Options', 'nosniff');
       response.setHeader('Content-Disposition', 'inline');
+      response.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     },
   }),
 );
@@ -160,6 +163,10 @@ app.use('/api/auth', createAuthRouter(manageSession, loginUser, sessions));
 const submissions = new PrismaSubmissionRepository(prisma);
 const submitSubmission = new SubmitSubmission(submissions);
 const manageSubmissions = new ManageSubmissions(submissions);
+const exportSubmissionPdf = new ExportSubmissionPdf(
+  submissions,
+  new SubmissionPdfDocumentRenderer(),
+);
 const reviews = new PrismaReviewRepository(prisma);
 const submitReview = new SubmitReview(reviews);
 const manageReviews = new ManageReviews(reviews);
@@ -170,9 +177,19 @@ const manageContent = new ManageContent(content);
 const media = new PrismaMediaRepository(prisma);
 const manageMedia = new ManageMedia(media, mediaStorage);
 const readPublicMedia = new ReadPublicMedia(media);
-app.use('/api/submissions', createSubmissionRouter(submitSubmission, manageSubmissions, sessions));
-app.use('/api/public/submissions', createPublicSubmissionRouter(submitSubmission));
-app.use('/api/admin/submissions', createAdminSubmissionRouter(manageSubmissions, sessions));
+const readQuestionnaire = new ReadQuestionnaire(manageContent);
+app.use(
+  '/api/submissions',
+  createSubmissionRouter(submitSubmission, manageSubmissions, sessions, exportSubmissionPdf),
+);
+app.use(
+  '/api/public/submissions',
+  createPublicSubmissionRouter(submitSubmission, (service) => readQuestionnaire.execute(service)),
+);
+app.use(
+  '/api/admin/submissions',
+  createAdminSubmissionRouter(manageSubmissions, sessions, exportSubmissionPdf),
+);
 app.use('/api/reviews', createReviewRouter(submitReview, manageReviews, sessions));
 app.use('/api/public/reviews', createPublicReviewRouter(submitReview, manageReviews));
 app.use('/api/admin/reviews', createAdminReviewRouter(manageReviews, sessions));
@@ -187,10 +204,7 @@ app.use('/api/admin/media', createAdminMediaRouter(manageMedia, sessions));
 app.use('/api/public/media', createPublicMediaRouter(readPublicMedia));
 app.use('/api/services', createServiceRouter(manageContent));
 app.use('/api/public/services', createServiceRouter(manageContent));
-app.use(
-  '/api/public/questionnaire',
-  createQuestionnaireRouter(new ReadQuestionnaire(manageContent)),
-);
+app.use('/api/public/questionnaire', createQuestionnaireRouter(readQuestionnaire));
 app.use(
   '/api/admin/audit',
   createAuditRouter(new ReadAuditLog(new PrismaAuditRepository(prisma)), sessions),

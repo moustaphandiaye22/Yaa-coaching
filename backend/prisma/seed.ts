@@ -118,6 +118,88 @@ function mergeMissingValues(existing: unknown, defaults: unknown): unknown {
   return existing;
 }
 
+const questionnaireUpdates = new Set([
+  'age',
+  'footballRhythm',
+  'weeklyMatches',
+  'expectationsShared',
+  'expectationsSharedDetails',
+  'deadline',
+  'deadlineDetails',
+  'weightLoss',
+  'kilos',
+  'priorities',
+  'playerPriorities',
+  'pastSupport',
+  'pastSupportDetails',
+]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function upgradeQuestionnaire(current: unknown, defaults: unknown): unknown {
+  if (!isRecord(current) || !isRecord(defaults)) return defaults;
+  if (current.version === defaults.version) return mergeMissingValues(current, defaults);
+
+  const currentSteps = Array.isArray(current.steps) ? current.steps : [];
+  const defaultSteps = Array.isArray(defaults.steps) ? defaults.steps : [];
+  const steps = defaultSteps.map((defaultStep) => {
+    if (!isRecord(defaultStep)) return defaultStep;
+    const currentStep = currentSteps.find(
+      (candidate) => isRecord(candidate) && candidate.number === defaultStep.number,
+    );
+    const previousQuestions =
+      isRecord(currentStep) && Array.isArray(currentStep.questions) ? currentStep.questions : [];
+    const previousByKey = new Map(
+      previousQuestions
+        .filter(isRecord)
+        .map((question) => [String(question.key), question] as const),
+    );
+    const defaultQuestions = Array.isArray(defaultStep.questions) ? defaultStep.questions : [];
+    const questionKeys = new Set(
+      defaultQuestions.filter(isRecord).map((question) => String(question.key)),
+    );
+    const questions = [
+      ...defaultQuestions.map((question) => {
+        if (!isRecord(question)) return question;
+        const previous = previousByKey.get(String(question.key));
+        if (!previous) return question;
+        return questionnaireUpdates.has(String(question.key))
+          ? { ...previous, ...question }
+          : mergeMissingValues(previous, question);
+      }),
+      ...previousQuestions.filter(
+        (question) => isRecord(question) && !questionKeys.has(String(question.key)),
+      ),
+    ];
+    return {
+      ...(isRecord(currentStep) ? currentStep : {}),
+      ...defaultStep,
+      questions,
+    };
+  });
+
+  return { ...current, ...defaults, steps };
+}
+
+function mergeQuestionnaireBlock(existing: unknown, defaults: unknown): unknown {
+  if (!isRecord(existing) || !isRecord(defaults)) return defaults;
+  const existingItems = isRecord(existing.items) ? existing.items : {};
+  const defaultItems = isRecord(defaults.items) ? defaults.items : {};
+  const items = Object.fromEntries(
+    Object.entries(defaultItems).map(([service, questionnaire]) => [
+      service,
+      upgradeQuestionnaire(existingItems[service], questionnaire),
+    ]),
+  );
+  return {
+    ...defaults,
+    ...existing,
+    items: { ...existingItems, ...items },
+  };
+}
+
 async function seedPublishedContent() {
   const defaults = [
     {
@@ -169,9 +251,15 @@ async function seedPublishedContent() {
       continue;
     }
 
-    const nextContent = mergeMissingValues(existing.content, json) as Prisma.InputJsonObject;
+    const nextContent = (
+      key === 'questionnaires'
+        ? mergeQuestionnaireBlock(existing.content, json)
+        : mergeMissingValues(existing.content, json)
+    ) as Prisma.InputJsonObject;
     const nextPublished = existing.publishedAt
-      ? (mergeMissingValues(existing.publishedContent, json) as Prisma.InputJsonObject)
+      ? ((key === 'questionnaires'
+          ? mergeQuestionnaireBlock(existing.publishedContent, json)
+          : mergeMissingValues(existing.publishedContent, json)) as Prisma.InputJsonObject)
       : null;
     const hasChanges =
       JSON.stringify(nextContent) !== JSON.stringify(existing.content) ||
