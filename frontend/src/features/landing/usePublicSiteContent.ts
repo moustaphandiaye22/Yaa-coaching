@@ -15,6 +15,7 @@ export type PublicMedia = {
 
 export function usePublicSiteContent() {
   const [heroContent, setHeroContent] = useState<HeroContent>({});
+  const [heroAvailable, setHeroAvailable] = useState(false);
   const [contentBlocks, setContentBlocks] = useState<Record<string, HeroContent>>({});
   const [extraContent, setExtraContent] = useState<{ key: string; title: string; body: string }[]>(
     [],
@@ -28,9 +29,7 @@ export function usePublicSiteContent() {
     setContentStatus('loading');
     requestJson<{ key: string; content: HeroContent }[]>('/api/public/site')
       .then((blocks) => {
-        if (!Array.isArray(blocks) || !blocks.some((block) => block.key === 'hero')) {
-          throw new Error('Contenu public incomplet.');
-        }
+        if (!Array.isArray(blocks)) throw new Error('Contenu public invalide.');
         setContentBlocks(
           Object.fromEntries(
             blocks
@@ -39,7 +38,9 @@ export function usePublicSiteContent() {
           ),
         );
         const hero = blocks.find((block) => block.key === 'hero');
-        if (hero?.content && typeof hero.content === 'object') setHeroContent(hero.content);
+        const hasHero = Boolean(hero?.content && typeof hero.content === 'object');
+        setHeroAvailable(hasHero);
+        setHeroContent(hasHero ? hero!.content : {});
         setExtraContent(
           blocks
             .filter(
@@ -85,6 +86,7 @@ export function usePublicSiteContent() {
 
   return {
     heroValue,
+    heroAvailable,
     contentFor,
     extraContent,
     publicMedia,

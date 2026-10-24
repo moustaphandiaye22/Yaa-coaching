@@ -55,7 +55,7 @@ function getAdminCredentials() {
 async function seedAdmin(email: string, password: string) {
   await prisma.user.upsert({
     where: { email },
-    update: { role: 'ADMIN', active: true },
+    update: {},
     create: {
       email,
       passwordHash: await argon2.hash(password),

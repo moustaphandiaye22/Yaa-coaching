@@ -15,9 +15,13 @@ type MediaItem = {
   position: number;
   published: boolean;
 };
-type Props = { api: AdminApi; onError: (message: string) => void };
+type Props = {
+  api: AdminApi;
+  onError: (message: string) => void;
+  onSuccess: (message: string) => void;
+};
 
-export default function AdminMediaPanel({ api, onError }: Props) {
+export default function AdminMediaPanel({ api, onError, onSuccess }: Props) {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [service, setService] = useState('');
@@ -44,7 +48,22 @@ export default function AdminMediaPanel({ api, onError }: Props) {
       return;
     }
 
-    const kind = file.type.startsWith('video/') ? 'VIDEO' : 'PHOTO';
+    const photoTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const videoTypes = ['video/mp4', 'video/webm'];
+    const kind = videoTypes.includes(file.type) ? 'VIDEO' : 'PHOTO';
+    if (!photoTypes.includes(file.type) && !videoTypes.includes(file.type)) {
+      onError(
+        'Format non accepté. Choisissez une image JPEG, PNG ou WebP, ou une vidéo MP4 ou WebM.',
+      );
+      return;
+    }
+    const maximumSize = kind === 'PHOTO' ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
+    if (file.size > maximumSize) {
+      onError(
+        `Le fichier dépasse la limite de ${kind === 'PHOTO' ? '10 Mo' : '100 Mo'}. Choisissez un fichier plus léger.`,
+      );
+      return;
+    }
     setBusy(true);
     try {
       const uploaded = await requestJson<{ url: string }>(`/api/admin/media/upload?kind=${kind}`, {
@@ -73,6 +92,7 @@ export default function AdminMediaPanel({ api, onError }: Props) {
       if (input) input.value = '';
       await load();
       onError('');
+      onSuccess('Le média a été téléversé et enregistré comme brouillon.');
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Impossible d’enregistrer ce média.');
     } finally {
@@ -88,6 +108,11 @@ export default function AdminMediaPanel({ api, onError }: Props) {
       });
       await load();
       onError('');
+      onSuccess(
+        item.published
+          ? 'Le média a été retiré du site.'
+          : 'Le média est maintenant publié sur le site.',
+      );
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Impossible de modifier la publication.');
     }
@@ -99,6 +124,7 @@ export default function AdminMediaPanel({ api, onError }: Props) {
       await api(`/api/admin/media/${item.id}`, { method: 'DELETE' });
       await load();
       onError('');
+      onSuccess('Le média a été supprimé.');
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Impossible de supprimer ce média.');
     }
@@ -109,7 +135,6 @@ export default function AdminMediaPanel({ api, onError }: Props) {
       <div className="admin-content-intro">
         <div>
           <p className="eyebrow">GALERIE PUBLIQUE</p>
-          <h2>Photos et vidéos.</h2>
           <p>
             Ajoutez des médias, puis publiez-les lorsqu’ils sont prêts à apparaître sur le site.
           </p>

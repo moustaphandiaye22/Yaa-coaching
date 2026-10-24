@@ -6,6 +6,7 @@ import type { SubmitReview } from '../application/submit-review.js';
 import { reviewStatuses } from '../domain/review-status.js';
 import { ManageReviews } from '../application/manage-reviews.js';
 import { createReviewSchema, updateReviewSchema } from './review-schemas.js';
+import { validationResponse } from '../../../shared/http/validation-response.js';
 
 export function createPublicReviewRouter(submitReview: SubmitReview, reviews: ManageReviews) {
   const router = Router();
@@ -19,16 +20,27 @@ export function createPublicReviewRouter(submitReview: SubmitReview, reviews: Ma
     asyncHandler(async (request, response) => {
       const parsed = createReviewSchema.safeParse(request.body);
       if (!parsed.success) {
-        response.status(400).json({
-          error: 'Vérifiez les champs du formulaire.',
-          fields: parsed.error.flatten().fieldErrors,
-        });
+        response.status(400).json(
+          validationResponse(
+            parsed.error,
+            {
+              pseudonym: 'Le prénom ou pseudonyme',
+              service: 'L’accompagnement',
+              rating: 'La note',
+              message: 'Le témoignage',
+              email: 'L’adresse e-mail',
+              consent: 'Votre accord de publication',
+            },
+            'Votre avis n’a pas été envoyé.',
+          ),
+        );
         return;
       }
       const review = await submitReview.execute(parsed.data);
       response.status(201).json({
         id: review.id,
-        message: 'Merci pour votre témoignage. Il sera visible après validation.',
+        message:
+          'Votre avis a bien été enregistré et transmis à l’administration. Il apparaîtra sur le site après validation par le coach.',
       });
     }),
   );

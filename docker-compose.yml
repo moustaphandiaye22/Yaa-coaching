@@ -1,34 +1,51 @@
 services:
   api:
-    image: node:22-alpine
-    working_dir: /app
-    command: sh -c "npm install && npm run prisma:generate --workspace backend && npm run prisma:deploy --workspace backend && npm run data:encrypt-existing --workspace backend && npm run prisma:seed --workspace backend && npm run dev --workspace backend"
-    ports: ['3000:3000']
-    env_file:
-      - ./backend/.env
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
     environment:
+      NODE_ENV: production
       PORT: 3000
-      FRONTEND_ORIGIN: http://localhost:5173
       MEDIA_STORAGE_DIR: /app/backend/var/media
+      DATABASE_URL: ${DATABASE_URL:?Définir DATABASE_URL dans l’environnement Compose}
+      DIRECT_URL: ${DIRECT_URL:?Définir DIRECT_URL dans l’environnement Compose}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:8080}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?Définir ADMIN_EMAIL dans l’environnement Compose}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Définir ADMIN_PASSWORD dans l’environnement Compose}
+      DATA_ENCRYPTION_KEY: ${DATA_ENCRYPTION_KEY:?Définir DATA_ENCRYPTION_KEY dans l’environnement Compose}
+      RESEND_API_KEY: ${RESEND_API_KEY:?Définir RESEND_API_KEY dans l’environnement Compose}
+      EMAIL_FROM: ${EMAIL_FROM:?Définir EMAIL_FROM dans l’environnement Compose}
+      NOTIFICATION_EMAIL: ${NOTIFICATION_EMAIL:?Définir NOTIFICATION_EMAIL dans l’environnement Compose}
+      SUBMISSION_RETENTION_DAYS: ${SUBMISSION_RETENTION_DAYS:-365}
+      REVIEW_EMAIL_RETENTION_DAYS: ${REVIEW_EMAIL_RETENTION_DAYS:-90}
+    ports:
+      - '3000:3000'
     volumes:
-      - .:/app
-      - yaa-node-modules:/app/node_modules
-      - yaa-backend-modules:/app/backend/node_modules
       - yaa-media:/app/backend/var/media
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/ready').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
   web:
-    image: node:22-alpine
-    working_dir: /app
-    command: sh -c "npm install && npm run dev --workspace frontend -- --host 0.0.0.0"
-    ports: ['5173:5173']
-    environment:
-      VITE_API_URL: http://localhost:3000
-    volumes:
-      - .:/app
-      - yaa-node-modules:/app/node_modules
-      - yaa-frontend-modules:/app/frontend/node_modules
-    depends_on: [api]
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_URL: ''
+    restart: unless-stopped
+    ports:
+      - '8080:80'
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
-  yaa-node-modules:
-  yaa-backend-modules:
   yaa-media:
-  yaa-frontend-modules:

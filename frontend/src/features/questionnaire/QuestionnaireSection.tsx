@@ -1,11 +1,19 @@
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ShieldCheck } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  RefreshCw,
+  ShieldCheck,
+} from 'lucide-react';
 import type { Question } from '../../shared/site-content.js';
 import { useQuestionnaireFlow } from './useQuestionnaireFlow.js';
 
 type Props = {
   initialSituation: string;
   initialService: string;
-  onNotice: (message: string) => void;
+  onNotice: (message: string, type?: 'success' | 'error' | 'info') => void;
 };
 
 export default function QuestionnaireSection({
@@ -128,7 +136,7 @@ export default function QuestionnaireSection({
       <div className="questionnaire-heading">
         <div>
           <p className="eyebrow">YAA COACHING · ACCOMPAGNEMENT PHYSIQUE & MENTAL</p>
-          <h2>{questionnaireTitle}</h2>
+          <h1>{questionnaireTitle}</h1>
         </div>
         <div>
           <p className="eyebrow">UN PREMIER ÉCHANGE</p>
@@ -207,18 +215,26 @@ export default function QuestionnaireSection({
           )}
           <div className="fields-grid">
             {!activeQuestionnaire && (
-              <div className="field-wide" role="status">
+              <div className="questionnaire-load-error field-wide" role="alert">
                 {questionnaireError ? (
                   <>
-                    Impossible de charger le questionnaire depuis le serveur. Vérifiez que le
-                    backend est démarré, puis{' '}
-                    <button type="button" className="text-link" onClick={reloadQuestionnaire}>
-                      réessayez
+                    <AlertCircle size={19} aria-hidden="true" />
+                    <p>
+                      Impossible de charger les questions pour le moment. Réessayez dans un instant.
+                    </p>
+                    <button
+                      type="button"
+                      className="button button-outline"
+                      onClick={reloadQuestionnaire}
+                    >
+                      Réessayer <RefreshCw size={15} aria-hidden="true" />
                     </button>
-                    .
                   </>
                 ) : (
-                  'Chargement des questions depuis le serveur…'
+                  <>
+                    <RefreshCw size={19} aria-hidden="true" />
+                    <p>Chargement des questions…</p>
+                  </>
                 )}
               </div>
             )}

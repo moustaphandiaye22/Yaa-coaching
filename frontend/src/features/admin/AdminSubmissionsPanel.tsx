@@ -14,6 +14,15 @@ type Props = {
   onSelect: (submission: Submission) => void;
 };
 
+const submissionStatusLabels: Record<string, string> = {
+  NEW: 'Nouvelle',
+  TO_CONTACT: 'À contacter',
+  CONTACTED: 'Contactée',
+  IN_PROGRESS: 'En cours',
+  CLOSED: 'Clôturée',
+  REJECTED: 'Refusée',
+};
+
 export default function AdminSubmissionsPanel({
   counts,
   total,
@@ -77,6 +86,8 @@ export default function AdminSubmissionsPanel({
           ))}
         </div>
         <input
+          type="search"
+          aria-label="Rechercher une demande"
           placeholder="Rechercher une personne, une ville..."
           value={query}
           onChange={(e) => {
@@ -99,17 +110,24 @@ export default function AdminSubmissionsPanel({
           </thead>
           <tbody>
             {items.map((x) => (
-              <tr key={x.id} onClick={() => onSelect(x)}>
+              <tr key={x.id}>
                 <td>
-                  <b>{x.contactName}</b>
-                  <small>{x.id.slice(-8)}</small>
+                  <button
+                    className="admin-row-open"
+                    type="button"
+                    onClick={() => onSelect(x)}
+                    aria-label={`Ouvrir le dossier de ${x.contactName}`}
+                  >
+                    <b>{x.contactName}</b>
+                    <small>Réf. {x.id.slice(-8)}</small>
+                  </button>
                 </td>
                 <td>{x.service}</td>
                 <td>{x.city}</td>
                 <td>{new Date(x.createdAt).toLocaleDateString('fr-FR')}</td>
                 <td>
                   <span className={`status-pill status-${x.status.toLowerCase()}`}>
-                    {x.status.replace('_', ' ')}
+                    {submissionStatusLabels[x.status] ?? 'À traiter'}
                   </span>
                 </td>
                 <td>
@@ -125,7 +143,7 @@ export default function AdminSubmissionsPanel({
       </div>
       <div className="admin-pagination">
         <span>
-          Page {page} · {total} résultat(s)
+          Page {page} · {total} résultat{total === 1 ? '' : 's'}
         </span>
         <button
           type="button"

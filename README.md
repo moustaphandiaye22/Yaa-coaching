@@ -44,15 +44,29 @@ Lors d’une mise à niveau d’une base contenant déjà des demandes ou des av
 npm run data:encrypt-existing --workspace backend
 ```
 
-Elle est idempotente et doit utiliser la même `DATA_ENCRYPTION_KEY` que le serveur.
+Cette migration est idempotente : les lignes déjà chiffrées ne sont pas réécrites. Elle doit utiliser la même `DATA_ENCRYPTION_KEY` que le serveur et ne doit être lancée que pour mettre à niveau des données anciennes.
 
-Le site est disponible sur `http://localhost:5173`, l’API sur `http://localhost:3000` et l’administration sur `http://localhost:5173/admin` (lien « Connexion » dans le menu). Le seed crée ou réactive le compte `ADMIN` défini par `ADMIN_EMAIL` sans remplacer son mot de passe s’il existe déjà, puis initialise les FAQ, l’accueil, le catalogue des accompagnements et les questionnaires dans `ContentBlock`. Il peut être exécuté de nouveau sans écraser les contenus déjà administrés.
+La zone d’intervention affiche une carte OpenStreetMap centrée sur Vierzon. L’intégration n’exige aucune clé d’API et conserve l’attribution OpenStreetMap dans la carte ; un lien permet aussi d’ouvrir la carte sur le site OpenStreetMap.
 
-Les contenus publiés sont modifiables depuis **Administration → Contenus** (blocs `hero`, `services`, `questionnaires`, `methode`, `player`, `coach`, `zones`, `contacts` et `closing`; les blocs JSON s’éditent dans l’éditeur prévu). Le catalogue et les questions sont chargés depuis PostgreSQL; les demandes, avis, médias et FAQ sont également lus ou enregistrés via l’API et PostgreSQL. Les trois noms techniques de service restent des identifiants métier validés côté serveur.
+Le site est disponible sur `http://localhost:5173`, l’API sur `http://localhost:3000` et l’administration sur `http://localhost:5173/admin` (lien « Connexion » dans le menu). Le seed crée le compte `ADMIN` défini par `ADMIN_EMAIL` s’il n’existe pas encore. S’il existe déjà, le seed ne modifie ni son mot de passe, ni son rôle, ni son statut. Le seed initialise aussi les FAQ, l’accueil, le catalogue des accompagnements et les questionnaires dans `ContentBlock`; il peut être exécuté de nouveau sans écraser les contenus déjà administrés.
+
+Les contenus publiés sont modifiables dans l’espace admin, organisés par page : accueil et accompagnements, méthode et coach, YAA Player, zones et coordonnées, et questionnaires. Les textes et les listes sont gérés dans des champs structurés. Le catalogue et les questions sont chargés depuis PostgreSQL ; les demandes, avis, médias et FAQ sont également lus ou enregistrés via l’API et PostgreSQL. Les trois noms techniques de service restent des identifiants métier validés côté serveur.
+
+### Déploiement Render + Vercel
+
+Le dépôt inclut `render.yaml` et `vercel.json`. Render construit l’API Node, applique les migrations Prisma, initialise le compte administrateur et les contenus par seed, puis expose `/api/ready` comme contrôle de santé. Les fichiers média sont conservés sur un disque Render. Vercel construit le frontend depuis la racine du monorepo et relaie les routes `/api/*` et `/media/*` vers Render ; les appels restent sur le domaine Vercel pour conserver les cookies de session same-origin.
+
+1. Pousser le dépôt vers GitHub, puis créer le service Render avec **New → Blueprint** et choisir ce dépôt. Le Blueprint utilise le plan Starter car les médias nécessitent un disque persistant. Render indique que les disques sont réservés aux services payants et que le système de fichiers sans disque est éphémère.
+2. Renseigner les secrets demandés dans Render : `DATABASE_URL` poolée Neon, `DIRECT_URL` directe Neon, `FRONTEND_ORIGIN` (origine Vercel exacte, sans slash final), `ADMIN_EMAIL`, `ADMIN_PASSWORD` (au moins 8 caractères), `DATA_ENCRYPTION_KEY` (32 octets en hexadécimal ou base64), `RESEND_API_KEY`, `EMAIL_FROM` et `NOTIFICATION_EMAIL`. Plusieurs origines autorisées peuvent être séparées par des virgules. Garder la clé de chiffrement stable après le déploiement.
+3. Attendre le déploiement et vérifier `https://yaa-coaching-api.onrender.com/api/ready` : la réponse attendue est `{"status":"ready"}`. Si Render attribue une autre URL, remplacer les destinations Render dans `vercel.json` par cette URL exacte.
+4. Importer le dépôt dans Vercel avec le **Root Directory** à la racine du dépôt et l’inclusion des fichiers extérieurs au dossier activée. `vercel.json` configure l’installation, la compilation et le dossier `frontend/dist` à publier.
+5. Renseigner `FRONTEND_ORIGIN` dans Render avec le domaine Vercel de production, redéployer l’API, puis vérifier l’accueil, `/admin`, les formulaires, la connexion administrateur et les médias. Pour utiliser les previews Vercel, ajouter leurs origines exactes à `FRONTEND_ORIGIN`.
+
+Sur Vercel, laisser `VITE_API_URL` vide afin d’utiliser les rewrites same-origin. En développement local, l’URL par défaut reste `http://localhost:3000`. Les secrets ne doivent pas être copiés dans le dépôt. Le seed s’exécute à chaque démarrage mais conserve le mot de passe d’un compte admin déjà créé ; changer `ADMIN_PASSWORD` plus tard ne réinitialise pas ce compte.
 
 ### Docker Compose
 
-Docker Compose lit le même `backend/.env` que le démarrage local. Après avoir renseigné les URL Neon, lancer `docker compose up`. `RESEND_API_KEY`, `EMAIL_FROM` et `NOTIFICATION_EMAIL` activent les e-mails et sont obligatoires en production. Les fichiers média restent dans le volume Docker `yaa-media`.
+Le Compose utilise des images multi-étapes : API Node compilée et frontend statique servi par Nginx. Nginx relaie `/api/*` et `/media/*` à l’API, et le volume `yaa-media` conserve les téléversements. Compose lit les variables du fichier racine `.env` (à créer à partir de `.env.example`) ; les fichiers `.env` ne sont pas copiés dans les images. Après les avoir renseignées, lancer `docker compose up --build`. Le site sera disponible sur `http://localhost:8080`; l’API est accessible au travers de Nginx sur la même origine. Le service API applique les migrations et initialise les contenus à son démarrage, mais ne lance pas le chiffrement ponctuel d’anciennes données. Pour une base contenant déjà des données non chiffrées, arrêter l’API et exécuter `npm run data:encrypt-existing --workspace backend` une fois avec la même `DATA_ENCRYPTION_KEY`, puis redémarrer. Ce Compose est une configuration mono-hôte ; Render + Vercel reste le parcours de déploiement décrit plus haut.
 
 ## API backend
 
@@ -69,9 +83,9 @@ Toutes les réponses d’administration nécessitent une session `ADMIN`.
 | Contenus            | `GET /api/admin/content`, `GET /api/admin/content/:key/preview`, `GET /api/admin/content/:key/revisions`, `PUT /api/admin/content/:key`, `DELETE /api/admin/content/:key/publication`                            |
 | Médias              | `GET /api/public/media`, CRUD sous `/api/admin/media`                                                                                                                                                            |
 | Audit               | `GET /api/admin/audit?before=<id>`                                                                                                                                                                               |
-| Comptes             | `GET                                                                                                                                                                                                             | POST /api/admin/users`, `PATCH                                        | DELETE /api/admin/users/:id` |
+| Comptes             | `GET /api/admin/users`, `POST /api/admin/users`, `PATCH /api/admin/users/:id`, `DELETE /api/admin/users/:id`                                                                                                     |
 | Notifications       | `GET /api/admin/notifications`, `POST /api/admin/notifications/retry`                                                                                                                                            |
-| Téléversement média | `POST /api/admin/media/upload?kind=PHOTO                                                                                                                                                                         | VIDEO` avec le fichier brut dans le corps et son type MIME en en-tête |
+| Téléversement média | `POST /api/admin/media/upload?kind=PHOTO` ou `kind=VIDEO`, avec le fichier brut dans le corps et son type MIME en en-tête                                                                                        |
 
 Les coordonnées, réponses, notes internes et e-mails d’avis sont chiffrés par AES-256-GCM au repos. La recherche exacte par e-mail utilise un index HMAC ; les recherches partielles sont filtrées après déchiffrement dans le processus API. Les mots de passe sont hachés avec Argon2id. Les avis restent en attente jusqu’à modération ; leur e-mail est effacé après `REVIEW_EMAIL_RETENTION_DAYS` (90 jours par défaut). Les sessions expirent après huit heures ; seul le hash du cookie est stocké en base. Les opérations sont consignées dans le journal d’audit. Les brouillons restent privés ; les versions sont historisées et prévisualisables avant publication. Les routes `/api/submissions`, `/api/reviews`, `/api/faqs`, `/api/content`, `/api/media` et `/api/services` restent disponibles pour compatibilité avec l’interface existante.
 
@@ -85,10 +99,6 @@ Trois illustrations WebP générées sont fournies dans `frontend/public/images/
 
 ## Mise en production
 
-Utiliser une base PostgreSQL dédiée et sauvegardée, HTTPS, une origine frontend/API correctement configurée et des secrets de déploiement hors dépôt. Exécuter les migrations avec `prisma migrate deploy`. En production, l’API refuse de démarrer si la clé de chiffrement, le fournisseur e-mail ou les durées de conservation sont absents ou invalides.
+Utiliser une base PostgreSQL dédiée et sauvegardée, HTTPS, une origine frontend/API correctement configurée et des secrets de déploiement hors dépôt. Le Blueprint Render exécute `prisma migrate deploy` avant le seed et le démarrage de l’API. En production, l’API refuse de démarrer si la clé de chiffrement, le fournisseur e-mail ou les durées de conservation sont absents ou invalides.
 
 L’administrateur initial est créé par le seed à partir de `ADMIN_EMAIL` et `ADMIN_PASSWORD`. Avant une collecte réelle, publier la politique de confidentialité correspondant aux durées de conservation configurées.
-
-# Yaa-coaching
-
-# Yaa-coaching

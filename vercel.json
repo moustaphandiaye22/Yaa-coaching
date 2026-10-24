@@ -1,0 +1,24 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm ci --include=dev",
+  "buildCommand": "npm run build --workspace frontend",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://yaa-coaching-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/media/:path*",
+      "destination": "https://yaa-coaching-api.onrender.com/media/:path*"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/favicon.svg"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

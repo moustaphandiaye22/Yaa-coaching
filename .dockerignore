@@ -1,0 +1,16 @@
+.git
+.vercel
+.agents
+.aws
+.codex
+**/node_modules
+**/dist
+**/coverage
+**/.env
+**/.env.*
+!**/.env.example
+backend/.env
+frontend/.env
+**/var/media
+**/*.tsbuildinfo
+npm-debug.log*

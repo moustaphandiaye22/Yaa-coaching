@@ -18,6 +18,60 @@ const statuses = [
   ['CLOSED', 'Clôturée'],
   ['REJECTED', 'Refusée'],
 ];
+const answerLabels: Record<string, string> = {
+  approach: 'Votre démarche',
+  firstName: 'Prénom',
+  representative: 'Responsable légal',
+  age: 'Âge',
+  situation: 'Situation',
+  city: 'Ville et pays',
+  objective: 'Objectif recherché',
+  goal: 'Objectif prioritaire',
+  priorities: 'Priorités',
+  playerPriorities: 'Priorités sportives',
+  activity: 'Activité actuelle',
+  activityDetails: 'Détails sur l’activité',
+  activities: 'Activités souhaitées',
+  helpStarting: 'Aide souhaitée pour commencer',
+  expectations: 'Attentes',
+  familyExpectations: 'Attentes des proches',
+  expectationsShared: 'Attentes partagées',
+  success: 'Résultat attendu',
+  deadline: 'Échéance envisagée',
+  availability: 'Disponibilités',
+  format: 'Format souhaité',
+  contactEmail: 'Adresse e-mail',
+  contactPhone: 'Téléphone',
+  club: 'Club, catégorie et niveau',
+  position: 'Poste principal',
+  secondaryPosition: 'Poste secondaire',
+  strongFoot: 'Pied fort',
+  footballStart: 'Début du football',
+  footballRhythm: 'Rythme hebdomadaire',
+  teamRole: 'Place dans l’équipe',
+  mistakeReaction: 'Réaction après une erreur',
+  pressure: 'Gestion de la pression',
+  confidence: 'Confiance',
+  effort: 'Efforts répétés',
+  qualities: 'Qualités principales',
+  progress: 'Axes de progression',
+  seasonGoal: 'Objectifs sportifs',
+  dailyActivities: 'Activités du quotidien',
+  reassurance: 'Situations nécessitant un soutien',
+  enjoy: 'Activités appréciées',
+  dailyChange: 'Changement souhaité',
+  surroundings: 'Entourage et soutien',
+  constraints: 'Contraintes et adaptations',
+  supportStyle: 'Accompagnement souhaité',
+  otherInfo: 'Autres précisions',
+  weightLoss: 'Objectif de perte de poids',
+  kilos: 'Perte de poids envisagée',
+  whyGoal: 'Motivation liée à cet objectif',
+  pastSupport: 'Accompagnements précédents',
+  experience: 'Expérience',
+  difficulties: 'Difficultés rencontrées',
+};
+const statusLabels = Object.fromEntries(statuses) as Record<string, string>;
 
 export default function AdminSubmissionDrawer({
   selected,
@@ -30,8 +84,19 @@ export default function AdminSubmissionDrawer({
 
   return (
     <div className="admin-drawer-back" onClick={onClose}>
-      <aside className="admin-drawer" onClick={(event) => event.stopPropagation()}>
-        <button className="drawer-close" onClick={onClose}>
+      <aside
+        className="admin-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Dossier de ${selected.contactName}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          className="drawer-close"
+          type="button"
+          onClick={onClose}
+          aria-label="Fermer le dossier"
+        >
           <X size={18} />
         </button>
         <p className="eyebrow">DEMANDE · {selected.id.slice(-8)}</p>
@@ -51,10 +116,10 @@ export default function AdminSubmissionDrawer({
           </button>
         </div>
         <span className={`status-pill status-${selected.status.toLowerCase()}`}>
-          {selected.status.replace('_', ' ')}
+          {statusLabels[selected.status] ?? 'À traiter'}
         </span>
         <div className="drawer-section">
-          <small>CONTACT</small>
+          <small>COORDONNÉES</small>
           <a href={`mailto:${selected.contactEmail}`}>{selected.contactEmail}</a>
           {selected.contactPhone && (
             <a href={`tel:${selected.contactPhone}`}>{selected.contactPhone}</a>
@@ -85,7 +150,7 @@ export default function AdminSubmissionDrawer({
             .filter(([key]) => !['contactEmail', 'contactPhone', 'consent'].includes(key))
             .map(([key, value]) => (
               <p key={key}>
-                <b>{key.replace(/[A-Z]/g, (letter) => ` ${letter.toLowerCase()}`)}</b>
+                <b>{answerLabels[key] ?? 'Autre précision'}</b>
                 <br />
                 {Array.isArray(value) ? value.join(', ') : String(value)}
               </p>
@@ -98,6 +163,7 @@ export default function AdminSubmissionDrawer({
             defaultValue={selected.internalNotes ?? ''}
             onBlur={(event) => void onUpdate(selected.id, { internalNotes: event.target.value })}
             rows={5}
+            maxLength={5000}
             placeholder="Ajouter une note..."
           />
         </div>

@@ -71,7 +71,13 @@ const sessions = new PrismaSessionStore(prisma);
 const users = new PrismaUserRepository(prisma);
 const loginUser = new LoginUser(users, new Argon2PasswordVerifier(), sessions);
 const manageSession = new ManageSession(users, sessions);
-const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173';
+const frontendOrigins = new Set(
+  (process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+);
+const isAllowedFrontendOrigin = (origin: string) => frontendOrigins.has(origin);
 const mediaStorage = new LocalMediaStorage();
 
 app.disable('x-powered-by');
@@ -80,11 +86,17 @@ app.use(
     strictTransportSecurity: process.env.NODE_ENV === 'production' ? undefined : false,
   }),
 );
-app.use(cors({ origin: frontendOrigin, credentials: true }));
+app.use(
+  cors({
+    origin: (origin, callback) =>
+      callback(null, origin && isAllowedFrontendOrigin(origin) ? origin : false),
+    credentials: true,
+  }),
+);
 app.use((request, response, next) => {
   const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method);
   const origin = request.get('origin');
-  if (isMutation && origin && origin !== frontendOrigin) {
+  if (isMutation && origin && !isAllowedFrontendOrigin(origin)) {
     response.status(403).json({ error: 'Origine de la requête refusée.' });
     return;
   }

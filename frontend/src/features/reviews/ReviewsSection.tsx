@@ -5,10 +5,11 @@ import { useServiceCatalog } from '../../shared/service-catalog.js';
 import { usePublicContact } from '../../shared/use-public-contact.js';
 
 type Review = { id: string; pseudonym: string; service: string; rating: number; message: string };
-type Props = { onNotice: (message: string) => void };
+type Props = {
+  onNotice: (message: string, type?: 'success' | 'error' | 'info') => void;
+};
 
 export default function ReviewsSection({ onNotice }: Props) {
-  const [reviewOpen, setReviewOpen] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -44,14 +45,14 @@ export default function ReviewsSection({ onNotice }: Props) {
         method: 'POST',
         body: JSON.stringify(payload),
       });
-      onNotice(result.message);
+      onNotice(result.message, 'success');
       form.reset();
-      setReviewOpen(false);
     } catch (error) {
       onNotice(
         error instanceof ApiError
           ? error.message
-          : 'Le service est momentanément indisponible. Votre avis est toujours dans le formulaire : réessayez.',
+          : 'Impossible d’envoyer votre avis pour le moment. Le formulaire est conservé : vérifiez votre connexion puis réessayez.',
+        'error',
       );
     } finally {
       setSending(false);
@@ -63,11 +64,11 @@ export default function ReviewsSection({ onNotice }: Props) {
       <div className="reviews-heading">
         <div>
           <p className="eyebrow">VOS RETOURS D’EXPÉRIENCE</p>
-          <h2>
+          <h1>
             Chaque parcours
             <br />
             <em>a sa voix.</em>
-          </h2>
+          </h1>
           <p>
             Découvrez les avis publiés avec l’accord des personnes accompagnées, ou partagez votre
             propre expérience.
@@ -107,9 +108,9 @@ export default function ReviewsSection({ onNotice }: Props) {
               <h3>Aucun avis publié pour le moment.</h3>
               <p>Vous avez été accompagné ? Vous pouvez partager votre expérience ci-dessous.</p>
             </div>
-            <button className="button button-outline" onClick={() => setReviewOpen(!reviewOpen)}>
+            <a className="button button-outline" href="#deposer-avis">
               Partager mon expérience <ArrowUpRight size={15} />
-            </button>
+            </a>
           </div>
         ) : (
           <div className="review-grid">
@@ -129,55 +130,75 @@ export default function ReviewsSection({ onNotice }: Props) {
             ))}
           </div>
         )}
-        {reviewOpen && (
-          <form className="review-form" onSubmit={sendReview}>
-            <div className="fields-grid">
-              <label className="field">
-                <span>Prénom ou pseudonyme affiché *</span>
-                <input name="pseudonym" required minLength={2} maxLength={60} />
-              </label>
-              <label className="field">
-                <span>Accompagnement concerné *</span>
-                <select name="service" required>
-                  <option value="">Choisissez</option>
-                  {services.map((s) => (
-                    <option key={s.name}>{s.name}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="field">
-                <span>Votre appréciation *</span>
-                <select name="rating" required>
-                  <option value="">Choisissez une note</option>
-                  <option value="5">5 / 5 — Très satisfait</option>
-                  <option value="4">4 / 5 — Satisfait</option>
-                  <option value="3">3 / 5 — Mitigé</option>
-                  <option value="2">2 / 5 — Peu satisfait</option>
-                  <option value="1">1 / 5 — Insatisfait</option>
-                </select>
-              </label>
-              <label className="field">
-                <span>Adresse e-mail (ne sera pas publiée) *</span>
-                <input name="email" type="email" required />
-              </label>
-              <label className="field field-wide">
-                <span>Votre expérience, avec vos mots * (20 à 1 200 caractères)</span>
-                <textarea name="message" required minLength={20} maxLength={1200} rows={4} />
-              </label>
-              <label className="consent-row">
-                <input name="consent" type="checkbox" required />
-                <span>
-                  J’accepte que mon avis, mon prénom ou pseudonyme et ma note soient publiés après
-                  validation. Je peux demander leur retrait à{' '}
-                  {email ? <a href={`mailto:${email}`}>{email}</a> : 'l’équipe YAA COACHING'}.
-                </span>
-              </label>
-            </div>
-            <button className="button button-dark" disabled={sending}>
-              {sending ? 'Envoi…' : 'Déposer mon avis'} <ArrowUpRight size={15} />
-            </button>
-          </form>
-        )}
+        <form className="review-form" id="deposer-avis" onSubmit={sendReview}>
+          <h2>Partager votre expérience</h2>
+          <div className="fields-grid">
+            <label className="field">
+              <span>Prénom ou pseudonyme affiché *</span>
+              <input
+                name="pseudonym"
+                autoComplete="nickname"
+                minLength={2}
+                maxLength={60}
+                required
+                placeholder="Ex. Awa ou CoachAwa"
+              />
+            </label>
+            <label className="field">
+              <span>Accompagnement concerné *</span>
+              <select name="service" required>
+                <option value="">Choisissez</option>
+                {services.map((s) => (
+                  <option key={s.name}>{s.name}</option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>Votre appréciation *</span>
+              <select name="rating" required>
+                <option value="">Choisissez une note</option>
+                <option value="5">5 / 5 — Très satisfait</option>
+                <option value="4">4 / 5 — Satisfait</option>
+                <option value="3">3 / 5 — Mitigé</option>
+                <option value="2">2 / 5 — Peu satisfait</option>
+                <option value="1">1 / 5 — Insatisfait</option>
+              </select>
+            </label>
+            <label className="field">
+              <span>Adresse e-mail (ne sera pas publiée) *</span>
+              <input
+                name="email"
+                type="email"
+                autoComplete="email"
+                maxLength={254}
+                required
+                placeholder="vous@exemple.fr"
+              />
+            </label>
+            <label className="field field-wide">
+              <span>Votre expérience, avec vos mots * (20 à 1 200 caractères)</span>
+              <textarea
+                name="message"
+                required
+                minLength={20}
+                maxLength={1200}
+                rows={4}
+                placeholder="Décrivez ce qui vous a aidé et les changements que vous avez constatés."
+              />
+            </label>
+            <label className="consent-row">
+              <input name="consent" type="checkbox" required />
+              <span>
+                J’accepte que mon avis, mon prénom ou pseudonyme et ma note soient publiés après
+                validation. Je peux demander leur retrait à{' '}
+                {email ? <a href={`mailto:${email}`}>{email}</a> : 'l’équipe YAA COACHING'}.
+              </span>
+            </label>
+          </div>
+          <button className="button button-dark" type="submit" disabled={sending}>
+            {sending ? 'Envoi…' : 'Déposer mon avis'} <ArrowUpRight size={15} />
+          </button>
+        </form>
         <p className="review-note">
           Votre avis sera visible après validation par le coach. Utilisez un pseudonyme et évitez
           les informations personnelles ou médicales. Pour un jeune mineur, le dépôt se fait avec

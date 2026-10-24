@@ -5,6 +5,7 @@ import { createRequireAdmin } from '../../../shared/http/auth-middleware.js';
 import type { SessionStore } from '../../auth/domain/session.js';
 import { LastActiveAdministratorError } from '../domain/user-management-repository.js';
 import type { ManageUsers } from '../application/manage-users.js';
+import { validationResponse } from '../../../shared/http/validation-response.js';
 
 const createSchema = z.object({
   email: z.string().trim().email().max(254),
@@ -45,7 +46,13 @@ export function createAdminUserRouter(users: ManageUsers, sessions: SessionStore
       if (!input.success) {
         response
           .status(400)
-          .json({ error: 'E-mail, rôle ou mot de passe invalide (12 caractères minimum).' });
+          .json(
+            validationResponse(
+              input.error,
+              { email: 'L’adresse e-mail', password: 'Le mot de passe', role: 'Le rôle' },
+              'Le compte n’a pas été créé.',
+            ),
+          );
         return;
       }
       const user = await users.create(
@@ -64,7 +71,17 @@ export function createAdminUserRouter(users: ManageUsers, sessions: SessionStore
     asyncHandler(async (request, response) => {
       const input = updateSchema.safeParse(request.body);
       if (!input.success) {
-        response.status(400).json({ error: 'Modification de compte invalide.' });
+        response.status(400).json(
+          validationResponse(
+            input.error,
+            {
+              active: 'Le statut du compte',
+              password: 'Le nouveau mot de passe',
+              role: 'Le rôle',
+            },
+            'La modification du compte a échoué.',
+          ),
+        );
         return;
       }
       const id = String(request.params.id);

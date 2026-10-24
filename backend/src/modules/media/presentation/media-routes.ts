@@ -4,6 +4,7 @@ import { createRequireAdmin } from '../../../shared/http/auth-middleware.js';
 import type { SessionStore } from '../../auth/domain/session.js';
 import { createMediaSchema, updateMediaSchema } from './media-schemas.js';
 import { ManageMedia, ReadPublicMedia } from '../application/manage-media.js';
+import { validationResponse } from '../../../shared/http/validation-response.js';
 
 export function createPublicMediaRouter(media: ReadPublicMedia) {
   const router = Router();
@@ -67,7 +68,20 @@ export function createAdminMediaRouter(media: ManageMedia, sessionStore: Session
     asyncHandler(async (request, response) => {
       const input = createMediaSchema.safeParse(request.body);
       if (!input.success) {
-        response.status(400).json({ error: 'Informations média invalides.' });
+        response.status(400).json(
+          validationResponse(
+            input.error,
+            {
+              kind: 'Le type de fichier',
+              service: 'L’accompagnement',
+              url: 'Le fichier téléversé',
+              alt: 'Le texte alternatif',
+              caption: 'La légende',
+              position: 'La position',
+            },
+            'Le média n’a pas été enregistré.',
+          ),
+        );
         return;
       }
       response.status(201).json(await media.create(input.data, response.locals.userId!));
@@ -79,7 +93,21 @@ export function createAdminMediaRouter(media: ManageMedia, sessionStore: Session
     asyncHandler(async (request, response) => {
       const input = updateMediaSchema.safeParse(request.body);
       if (!input.success) {
-        response.status(400).json({ error: 'Informations média invalides.' });
+        response.status(400).json(
+          validationResponse(
+            input.error,
+            {
+              kind: 'Le type de fichier',
+              service: 'L’accompagnement',
+              url: 'Le fichier téléversé',
+              alt: 'Le texte alternatif',
+              caption: 'La légende',
+              position: 'La position',
+              published: 'Le statut de publication',
+            },
+            'La modification du média a échoué.',
+          ),
+        );
         return;
       }
       response.json(

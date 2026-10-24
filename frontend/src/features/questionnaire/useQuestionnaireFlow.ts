@@ -15,7 +15,7 @@ type Questionnaire = {
 export function useQuestionnaireFlow(
   initialSituation: string,
   initialService: string,
-  onNotice: (message: string) => void,
+  onNotice: (message: string, type?: 'success' | 'error' | 'info') => void,
 ) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
@@ -96,23 +96,29 @@ export function useQuestionnaireFlow(
     return question.required || (question.key === 'representative' && isMinor);
   }
 
-  function stageValid() {
-    return (
-      Boolean(activeQuestionnaire) &&
-      visibleQuestions(currentQuestions)
-        .filter(questionIsRequired)
-        .every((question) => {
-          const answer = answers[question.key];
-          return Array.isArray(answer) ? answer.length > 0 : String(answer ?? '').trim().length > 0;
-        })
-    );
+  function invalidQuestions(questions: Question[]) {
+    return visibleQuestions(questions).filter((question) => {
+      const answer = answers[question.key];
+      const empty = Array.isArray(answer)
+        ? answer.length === 0
+        : String(answer ?? '').trim().length === 0;
+      if (questionIsRequired(question) && empty) return true;
+      if (
+        question.type === 'email' &&
+        !empty &&
+        (typeof answer !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answer.trim()))
+      ) {
+        return true;
+      }
+      return false;
+    });
   }
 
   async function submit() {
     if (submitting) return;
     setSubmitting(true);
     try {
-      await requestJson('/api/public/submissions', {
+      const result = await requestJson<{ message: string }>('/api/public/submissions', {
         method: 'POST',
         body: JSON.stringify({
           service,
@@ -129,9 +135,7 @@ export function useQuestionnaireFlow(
           ...(isMinor ? { guardianConsent: true } : {}),
         }),
       });
-      onNotice(
-        'Merci. Votre demande a bien été transmise. Le coach pourra vous recontacter prochainement.',
-      );
+      onNotice(result.message, 'success');
       setAnswers({});
       setStep(0);
     } catch (error) {
@@ -139,6 +143,7 @@ export function useQuestionnaireFlow(
         error instanceof ApiError
           ? error.message
           : 'Le service est momentanément indisponible. Vos réponses sont conservées, réessayez dans quelques instants.',
+        'error',
       );
     } finally {
       setSubmitting(false);
@@ -146,11 +151,19 @@ export function useQuestionnaireFlow(
   }
 
   function continueToNextStep() {
-    if (!stageValid()) {
+    if (!activeQuestionnaire) {
       onNotice(
-        activeQuestionnaire
-          ? 'Complétez les champs obligatoires pour continuer.'
-          : 'Le questionnaire est en cours de chargement. Réessayez dans un instant.',
+        'Le questionnaire est en cours de chargement. Réessayez dans quelques instants.',
+        'info',
+      );
+      return;
+    }
+    const invalid = invalidQuestions(currentQuestions);
+    if (invalid.length) {
+      const labels = invalid.map((question) => question.label).join(' ; ');
+      onNotice(
+        `Pour continuer, complétez ou corrigez les champs suivants : ${labels}. Vérifiez le format de l’adresse e-mail si elle est demandée.`,
+        'error',
       );
       return;
     }
@@ -159,15 +172,19 @@ export function useQuestionnaireFlow(
   }
 
   function submitIfValid() {
-    if (
-      !stageValid() ||
-      answers.consent !== 'yes' ||
-      (isMinor && answers.guardianConsent !== 'yes')
-    ) {
+    if (!activeQuestionnaire) {
+      onNotice('Le questionnaire n’est pas encore prêt. Réessayez dans quelques instants.', 'info');
+      return;
+    }
+    const invalid = invalidQuestions(currentQuestions).map((question) => question.label);
+    if (answers.consent !== 'yes') invalid.push('votre accord de contact');
+    if (isMinor && answers.guardianConsent !== 'yes') {
+      invalid.push('l’accord du parent ou responsable légal');
+    }
+    if (invalid.length) {
       onNotice(
-        isMinor
-          ? 'Vérifiez les champs obligatoires, votre consentement et celui du parent ou responsable légal.'
-          : 'Vérifiez les champs obligatoires et votre consentement.',
+        `Votre demande n’a pas été envoyée. Corrigez les éléments suivants : ${invalid.join(' ; ')}.`,
+        'error',
       );
       return;
     }

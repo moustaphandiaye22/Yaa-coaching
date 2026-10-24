@@ -4,9 +4,12 @@ import type { AdminFaq, ReviewAdmin, Submission } from './admin-types.js';
 
 export function useAdminWorkspace() {
   const [user, setUser] = useState(''),
+    [sessionChecked, setSessionChecked] = useState(false),
     [email, setEmail] = useState(''),
     [password, setPassword] = useState(''),
+    [loginPending, setLoginPending] = useState(false),
     [error, setError] = useState(''),
+    [notice, setNotice] = useState(''),
     [tab, setTab] = useState('demandes'),
     [items, setItems] = useState<Submission[]>([]),
     [reviews, setReviews] = useState<ReviewAdmin[]>([]),
@@ -42,7 +45,8 @@ export function useAdminWorkspace() {
         if (d.role === 'ADMIN') setUser(d.email);
         else setError('Cet espace est réservé aux comptes administrateurs.');
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setSessionChecked(true));
   }, [api]);
   const selectedId = selected?.id;
   useEffect(() => {
@@ -80,7 +84,9 @@ export function useAdminWorkspace() {
   }, [user, load]);
   async function login(e: React.FormEvent) {
     e.preventDefault();
+    if (loginPending) return;
     setError('');
+    setLoginPending(true);
     try {
       const d = await api<{ role: string; email: string }>('/api/auth/login', {
         method: 'POST',
@@ -91,8 +97,13 @@ export function useAdminWorkspace() {
         throw new Error('Cet espace est réservé aux comptes administrateurs.');
       }
       setUser(d.email);
+      setSessionChecked(true);
+      setNotice('Connexion réussie. Vous êtes dans l’espace d’administration.');
     } catch (e) {
+      setNotice('');
       setError(e instanceof Error ? e.message : 'Connexion impossible');
+    } finally {
+      setLoginPending(false);
     }
   }
   async function deleteSubmission() {
@@ -101,6 +112,8 @@ export function useAdminWorkspace() {
       await api(`/api/admin/submissions/${selected.id}`, { method: 'DELETE' });
       setSelected(null);
       await load();
+      setError('');
+      setNotice('La demande et ses données ont été supprimées.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Suppression impossible');
     }
@@ -110,6 +123,8 @@ export function useAdminWorkspace() {
       await api(`/api/admin/submissions/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
       await load();
       if (selected) setSelected({ ...selected, ...data });
+      setError('');
+      setNotice('Les modifications de la demande ont été enregistrées.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur');
     }
@@ -118,6 +133,14 @@ export function useAdminWorkspace() {
     try {
       await api(`/api/admin/reviews/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
       await load();
+      setError('');
+      setNotice(
+        status === 'PUBLISHED'
+          ? 'L’avis a été publié sur le site.'
+          : status === 'REJECTED'
+            ? 'L’avis a été rejeté et ne sera pas publié.'
+            : 'L’avis a été masqué du site.',
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur');
     }
@@ -127,6 +150,8 @@ export function useAdminWorkspace() {
     try {
       await api(`/api/admin/reviews/${id}`, { method: 'DELETE' });
       await load();
+      setError('');
+      setNotice('L’avis a été supprimé.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Suppression impossible');
     }
@@ -141,6 +166,8 @@ export function useAdminWorkspace() {
       setFaqQ('');
       setFaqA('');
       await load();
+      setError('');
+      setNotice('La question fréquente a été ajoutée.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur');
     }
@@ -149,8 +176,27 @@ export function useAdminWorkspace() {
     try {
       await api(`/api/admin/faqs/${id}`, { method: 'PATCH', body: JSON.stringify({ published }) });
       await load();
+      setError('');
+      setNotice(
+        published ? 'La question est publiée sur le site.' : 'La question est masquée du site.',
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Modification impossible');
+    }
+  }
+  async function saveFaq(id: string, question: string, answer: string) {
+    try {
+      await api(`/api/admin/faqs/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ question, answer }),
+      });
+      await load();
+      setError('');
+      setNotice('La question et sa réponse ont été mises à jour.');
+      return true;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'La modification de la question a échoué.');
+      return false;
     }
   }
   async function deleteFaq(id: string) {
@@ -158,6 +204,8 @@ export function useAdminWorkspace() {
     try {
       await api(`/api/admin/faqs/${id}`, { method: 'DELETE' });
       await load();
+      setError('');
+      setNotice('La question a été supprimée.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Suppression impossible');
     }
@@ -165,12 +213,16 @@ export function useAdminWorkspace() {
   return {
     user,
     setUser,
+    sessionChecked,
     email,
     setEmail,
     password,
     setPassword,
+    loginPending,
     error,
     setError,
+    notice,
+    setNotice,
     tab,
     setTab,
     items,
@@ -202,6 +254,7 @@ export function useAdminWorkspace() {
     deleteReview,
     addFaq,
     updateFaq,
+    saveFaq,
     deleteFaq,
   };
 }

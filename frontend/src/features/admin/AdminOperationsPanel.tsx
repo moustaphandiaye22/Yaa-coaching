@@ -29,6 +29,7 @@ type Props = {
   section: 'comptes' | 'journal' | 'notifications';
   api: AdminApi;
   onError: (message: string) => void;
+  onSuccess: (message: string) => void;
 };
 
 const labels = {
@@ -36,8 +37,53 @@ const labels = {
   journal: 'Journal d’activité',
   notifications: 'Notifications e-mail',
 };
+const auditActionLabels: Record<string, string> = {
+  FAQ_CREATED: 'Question fréquente ajoutée',
+  FAQ_UPDATED: 'Question fréquente modifiée',
+  FAQ_DELETED: 'Question fréquente supprimée',
+  FAQ_PUBLISHED: 'Question fréquente publiée',
+  FAQ_UNPUBLISHED: 'Question fréquente masquée',
+  USER_CREATED: 'Compte créé',
+  USER_UPDATED: 'Compte modifié',
+  USER_DELETED: 'Compte supprimé',
+  MEDIA_CREATED: 'Média ajouté',
+  MEDIA_UPDATED: 'Média modifié',
+  MEDIA_DELETED: 'Média supprimé',
+  CONTENT_UPDATED: 'Contenu modifié',
+  CONTENT_PUBLISHED: 'Contenu publié',
+  CONTENT_UNPUBLISHED: 'Publication retirée',
+  REVIEW_PUBLISHED: 'Avis publié',
+  REVIEW_SUBMITTED: 'Avis reçu pour modération',
+  REVIEW_REJECTED: 'Avis refusé',
+  REVIEW_HIDDEN: 'Avis masqué',
+  REVIEW_DELETED: 'Avis supprimé',
+  SUBMISSION_UPDATED: 'Demande mise à jour',
+  SUBMISSION_CREATED: 'Nouvelle demande reçue',
+  SUBMISSION_NEW: 'Demande marquée comme nouvelle',
+  SUBMISSION_TO_CONTACT: 'Demande à contacter',
+  SUBMISSION_CONTACTED: 'Demande marquée comme contactée',
+  SUBMISSION_IN_PROGRESS: 'Accompagnement en cours',
+  SUBMISSION_CLOSED: 'Demande clôturée',
+  SUBMISSION_REJECTED: 'Demande refusée',
+  SUBMISSION_DELETED: 'Demande supprimée',
+  SUBMISSION_NOTE_UPDATED: 'Note interne modifiée',
+};
+const entityLabels: Record<string, string> = {
+  Faq: 'Question fréquente',
+  Review: 'Avis',
+  User: 'Compte',
+  Media: 'Média',
+  Content: 'Contenu',
+  ContentBlock: 'Contenu',
+  Submission: 'Demande',
+};
+const notificationLabels: Record<string, string> = {
+  SUBMISSION_RECEIVED: 'Nouvelle demande reçue',
+  SUBMISSION_RECEIPT: 'Confirmation de réception',
+  REVIEW_SUBMITTED: 'Nouvel avis à modérer',
+};
 
-export default function AdminOperationsPanel({ section, api, onError }: Props) {
+export default function AdminOperationsPanel({ section, api, onError, onSuccess }: Props) {
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [audit, setAudit] = useState<AuditRecord[]>([]);
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
@@ -96,6 +142,7 @@ export default function AdminOperationsPanel({ section, api, onError }: Props) {
       setRole('ADMIN');
       onError('');
       await load();
+      onSuccess('Le compte a été créé avec les droits sélectionnés.');
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Création du compte impossible.');
     } finally {
@@ -111,6 +158,13 @@ export default function AdminOperationsPanel({ section, api, onError }: Props) {
       await api(`/api/admin/users/${user.id}`, { method: 'PATCH', body: JSON.stringify(changes) });
       onError('');
       await load();
+      onSuccess(
+        changes.password
+          ? 'Le mot de passe du compte a été modifié.'
+          : changes.role
+            ? 'Le rôle du compte a été modifié.'
+            : 'Le statut du compte a été modifié.',
+      );
       return true;
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Modification du compte impossible.');
@@ -146,6 +200,7 @@ export default function AdminOperationsPanel({ section, api, onError }: Props) {
       await api(`/api/admin/users/${user.id}`, { method: 'DELETE' });
       onError('');
       await load();
+      onSuccess('Le compte a été supprimé.');
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Suppression du compte impossible.');
     }
@@ -160,6 +215,11 @@ export default function AdminOperationsPanel({ section, api, onError }: Props) {
       setDispatched(result.dispatched);
       onError('');
       await load();
+      onSuccess(
+        result.dispatched === 0
+          ? 'Aucune notification n’était prête à être relancée.'
+          : `${result.dispatched} notification${result.dispatched > 1 ? 's' : ''} relancée${result.dispatched > 1 ? 's' : ''}.`,
+      );
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Relance impossible.');
     } finally {
@@ -172,7 +232,6 @@ export default function AdminOperationsPanel({ section, api, onError }: Props) {
       <div className="admin-content-intro">
         <div>
           <p className="eyebrow">OUTILS D’ADMINISTRATION</p>
-          <h2>{labels[section]}.</h2>
           <p>
             {section === 'comptes'
               ? 'Gérez les accès et les rôles. Les mots de passe doivent contenir au moins 12 caractères. Un compte Coach ne peut pas ouvrir cet espace.'
@@ -322,9 +381,9 @@ export default function AdminOperationsPanel({ section, api, onError }: Props) {
                   <ShieldCheck size={15} />
                 </span>
                 <div>
-                  <b>{item.action}</b>
+                  <b>{auditActionLabels[item.action] ?? 'Action d’administration'}</b>
                   <small>
-                    {item.entity ?? 'Action système'}
+                    {item.entity ? (entityLabels[item.entity] ?? 'Élément') : 'Action système'}
                     {item.entityId ? ` · ${item.entityId}` : ''}
                   </small>
                 </div>
@@ -380,17 +439,26 @@ export default function AdminOperationsPanel({ section, api, onError }: Props) {
               <tbody>
                 {notifications.map((item) => (
                   <tr key={item.id}>
-                    <td>{item.kind}</td>
+                    <td>{notificationLabels[item.kind] ?? 'Notification'}</td>
                     <td>{new Date(item.createdAt).toLocaleString('fr-FR')}</td>
                     <td>{item.attempts}</td>
                     <td>
                       <span
-                        className={`status-pill ${item.sentAt ? 'status-published' : 'status-pending'}`}
+                        className={`status-pill ${item.sentAt ? 'status-published' : item.lastError ? 'status-rejected' : 'status-pending'}`}
                       >
-                        {item.sentAt ? 'Envoyée' : 'En attente'}
+                        {item.sentAt ? 'Envoyée' : item.lastError ? 'Échec' : 'En attente'}
                       </span>
                     </td>
-                    <td>{item.lastError ?? '—'}</td>
+                    <td>
+                      {item.lastError ? (
+                        <details className="admin-technical-error">
+                          <summary>Échec d’envoi · Détail technique</summary>
+                          <p>{item.lastError}</p>
+                        </details>
+                      ) : (
+                        'Aucune erreur enregistrée'
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

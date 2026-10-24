@@ -6,6 +6,7 @@ import type { SubmitSubmission } from '../application/submit-submission.js';
 import { submissionStatuses } from '../domain/submission-status.js';
 import { createSubmissionSchema, updateSubmissionSchema } from './submission-schemas.js';
 import { ManageSubmissions } from '../application/manage-submissions.js';
+import { validationResponse } from '../../../shared/http/validation-response.js';
 
 export function createPublicSubmissionRouter(submitSubmission: SubmitSubmission) {
   const router = Router();
@@ -15,10 +16,32 @@ export function createPublicSubmissionRouter(submitSubmission: SubmitSubmission)
     asyncHandler(async (request, response) => {
       const parsed = createSubmissionSchema.safeParse(request.body);
       if (!parsed.success) {
-        response.status(400).json({
-          error: 'Vérifiez les champs requis et le consentement.',
-          fields: parsed.error.flatten().fieldErrors,
-        });
+        response.status(400).json(
+          validationResponse(
+            parsed.error,
+            {
+              service: 'L’accompagnement',
+              city: 'La ville',
+              contactName: 'Le prénom de la personne à recontacter',
+              contactEmail: 'L’adresse e-mail de contact',
+              contactPhone: 'Le numéro de téléphone',
+              'answers.approach': 'Votre démarche',
+              'answers.firstName': 'Le prénom de la personne accompagnée',
+              'answers.age': 'L’âge de la personne accompagnée',
+              'answers.city': 'La ville',
+              'answers.situation': 'La situation',
+              'answers.difficulties': 'Les difficultés rencontrées',
+              'answers.expectations': 'Vos attentes',
+              'answers.goal': 'Votre objectif',
+              'answers.contactEmail': 'Votre adresse e-mail',
+              'answers.priorities': 'Vos priorités',
+              'answers.playerPriorities': 'Les priorités du joueur',
+              consent: 'Votre accord de contact',
+              guardianConsent: 'L’accord du parent ou responsable légal',
+            },
+            'Votre demande n’a pas été envoyée.',
+          ),
+        );
         return;
       }
       const { guardianConsent, consent, website, ...data } = parsed.data;
@@ -28,7 +51,11 @@ export function createPublicSubmissionRouter(submitSubmission: SubmitSubmission)
         ...data,
         guardianConsent: guardianConsent === true,
       });
-      response.status(201).json({ ...submission, message: 'Votre demande a bien été transmise.' });
+      response.status(201).json({
+        ...submission,
+        message:
+          'Votre demande a bien été enregistrée et transmise au coach. Il pourra vous recontacter à l’adresse e-mail indiquée.',
+      });
     }),
   );
 

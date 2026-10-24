@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: yaa-coaching-api
+    runtime: node
+    plan: starter
+    region: frankfurt
+    buildCommand: npm ci --include=dev && npm run prisma:generate --workspace backend && npm run build --workspace backend
+    startCommand: npm run prisma:deploy --workspace backend && npm run prisma:seed --workspace backend && npm run start --workspace backend
+    healthCheckPath: /api/ready
+    disk:
+      name: yaa-coaching-media
+      mountPath: /opt/render/project/src/backend/var/media
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DATA_ENCRYPTION_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: NOTIFICATION_EMAIL
+        sync: false
+      - key: SUBMISSION_RETENTION_DAYS
+        value: '365'
+      - key: REVIEW_EMAIL_RETENTION_DAYS
+        value: '90'
+      - key: MEDIA_STORAGE_DIR
+        value: /opt/render/project/src/backend/var/media

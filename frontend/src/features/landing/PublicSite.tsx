@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import {
   ArrowDown,
   ArrowUpRight,
+  CircleAlert,
   CircleCheck,
   Dumbbell,
   Heart,
-  MapPin,
+  Info,
   RefreshCw,
   Sparkles,
   Target,
@@ -32,10 +33,12 @@ function PublicSite({
   setMobileNav: (v: boolean) => void;
 }) {
   const [notice, setNotice] = useState('');
+  const [noticeType, setNoticeType] = useState<'success' | 'error' | 'info'>('info');
   const [initialSituation, setInitialSituation] = useState('');
   const [initialService, setInitialService] = useState('');
   const {
     heroValue,
+    heroAvailable,
     contentFor,
     extraContent,
     serviceContent,
@@ -54,7 +57,14 @@ function PublicSite({
     questionnaire: 'Entretien découverte',
   };
   const pageTitle = pageTitles[page] ?? pageTitles.home;
+  const openStreetMapEmbedUrl =
+    'https://www.openstreetmap.org/export/embed.html?bbox=2.01%2C47.17%2C2.13%2C47.27&layer=mapnik&marker=47.221%2C2.069';
+  const ServicesTitle = page === 'accompagnements' ? 'h1' : 'h2';
   const show = (...pages: string[]) => pages.includes(page);
+  const notify = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setNotice(message);
+    setNoticeType(type);
+  };
   const startQuestionnaire = (situation?: string, service?: string) => {
     if (situation) setInitialSituation(situation);
     if (service) setInitialService(service);
@@ -82,12 +92,6 @@ function PublicSite({
         onNavigate={onNavigate}
       />
       <main id="top" className={`public-page public-page-${page}`}>
-        {page !== 'home' && (
-          <header className="page-heading section-pad">
-            <p className="eyebrow">YAA COACHING · LE CORPS · L’ESPRIT · VOUS</p>
-            <h1>{pageTitle}</h1>
-          </header>
-        )}
         {show('home', 'accompagnements', 'methode', 'coach') && contentStatus !== 'ready' && (
           <section className="content-state section-pad" role="status" aria-live="polite">
             <div className="content-state-card">
@@ -96,11 +100,11 @@ function PublicSite({
               </span>
               <div>
                 <p className="eyebrow">CONTENU DU SITE</p>
-                <h2>
+                <h1>
                   {contentStatus === 'loading'
                     ? 'Nous préparons cette page.'
                     : 'Contenu momentanément indisponible.'}
-                </h2>
+                </h1>
                 <p>
                   {contentStatus === 'loading'
                     ? 'Les informations sont en cours de chargement.'
@@ -115,7 +119,24 @@ function PublicSite({
             </div>
           </section>
         )}
-        {show('home') && contentStatus === 'ready' && (
+        {show('home') && contentStatus === 'ready' && !heroAvailable && (
+          <section className="content-state section-pad" role="status">
+            <div className="content-state-card">
+              <span className="content-state-icon">
+                <Info size={22} />
+              </span>
+              <div>
+                <p className="eyebrow">ACCUEIL</p>
+                <h1>La présentation de l’accueil est momentanément indisponible.</h1>
+                <p>
+                  Les autres informations du site restent consultables. Revenez bientôt pour
+                  retrouver cette présentation.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+        {show('home') && contentStatus === 'ready' && heroAvailable && (
           <section className="hero">
             <div className="hero-copy">
               <p className="eyebrow">
@@ -209,11 +230,11 @@ function PublicSite({
             <div className="section-heading">
               <div>
                 <p className="eyebrow">{String(servicesSection.eyebrow ?? '')}</p>
-                <h2>
+                <ServicesTitle>
                   {String(servicesSection.title ?? '')}
                   <br />
                   <em>{String(servicesSection.accent ?? '')}</em>
-                </h2>
+                </ServicesTitle>
               </div>
               <p className="section-intro">{String(servicesSection.introduction ?? '')}</p>
             </div>
@@ -275,11 +296,11 @@ function PublicSite({
           <section className="pillars section-pad">
             <div className="pillar-top">
               <p className="eyebrow">{String(methodContent.pillarsEyebrow ?? '')}</p>
-              <h2>
+              <h1>
                 {String(methodContent.pillarsTitle ?? '')}
                 <br />
                 <em>{String(methodContent.pillarsAccent ?? '')}</em>
-              </h2>
+              </h1>
               <p>{String(methodContent.pillarsIntroduction ?? '')}</p>
             </div>
             <div className="pillar-list">
@@ -403,7 +424,7 @@ function PublicSite({
             </div>
             <div className="coach-copy">
               <p className="eyebrow">{String(coachContent.eyebrow ?? '')}</p>
-              <h2 className="copy-preserve-lines">{String(coachContent.title ?? '')}</h2>
+              <h1 className="copy-preserve-lines">{String(coachContent.title ?? '')}</h1>
               {Array.isArray(coachContent.paragraphs) &&
                 coachContent.paragraphs.map((paragraph, index) => (
                   <p key={index}>{String(paragraph)}</p>
@@ -442,7 +463,7 @@ function PublicSite({
           <QuestionnaireSection
             initialSituation={initialSituation}
             initialService={initialService}
-            onNotice={setNotice}
+            onNotice={notify}
           />
         )}
         {show('accompagnements') && contentStatus === 'ready' && (
@@ -476,20 +497,28 @@ function PublicSite({
                     </article>
                   );
                 })}
-              <div className="map-art">
-                <div className="map-lines" />
-                <span className="map-pin">
-                  <MapPin size={18} aria-hidden="true" /> VIERZON
-                </span>
-                <span className="map-ring ring-a" />
-                <span className="map-ring ring-b" />
-                <span className="map-coordinate">47°13' N · 2°04' E</span>
+              <div className="service-area-map">
+                <div className="service-area-map-heading">
+                  <b>Zone d’intervention autour de Vierzon</b>
+                  <a
+                    href="https://www.openstreetmap.org/?mlat=47.221&mlon=2.069#map=13/47.221/2.069"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Ouvrir OpenStreetMap <ArrowUpRight size={15} aria-hidden="true" />
+                  </a>
+                </div>
+                <iframe
+                  title="Carte OpenStreetMap de Vierzon et des alentours"
+                  src={openStreetMapEmbedUrl}
+                  loading="lazy"
+                />
               </div>
             </div>
           </section>
         )}
         {show('galerie') && <GallerySection />}
-        {show('avis') && <ReviewsSection onNotice={setNotice} />}
+        {show('avis') && <ReviewsSection onNotice={notify} />}
         {show('avis') && <FaqSection />}
         {show('home') && contentStatus === 'ready' && (
           <section className="closing-cta">
@@ -510,8 +539,17 @@ function PublicSite({
       </main>
       <SiteFooter />
       {notice && (
-        <div className="toast" role="status">
-          <CircleCheck size={18} />
+        <div
+          className={`toast toast-${noticeType}`}
+          role={noticeType === 'error' ? 'alert' : 'status'}
+        >
+          {noticeType === 'error' ? (
+            <CircleAlert size={18} />
+          ) : noticeType === 'success' ? (
+            <CircleCheck size={18} />
+          ) : (
+            <Info size={18} />
+          )}
           {notice}
           <button onClick={() => setNotice('')} aria-label="Fermer">
             <X size={16} />

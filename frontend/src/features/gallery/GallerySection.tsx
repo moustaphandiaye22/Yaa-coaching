@@ -40,9 +40,9 @@ export default function GallerySection() {
         <div className="section-heading">
           <div>
             <p className="eyebrow">UN APERÇU VISUEL DES TROIS ACCOMPAGNEMENTS</p>
-            <h2>
+            <h1>
               Photos <em>& vidéos.</em>
-            </h2>
+            </h1>
           </div>
           <p className="section-intro">
             Écouter, bouger, progresser et garder le lien. Chaque parcours commence par une

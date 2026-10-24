@@ -4,6 +4,7 @@ import { createRequireAdmin } from '../../../shared/http/auth-middleware.js';
 import type { SessionStore } from '../../auth/domain/session.js';
 import { ManageFaqs } from '../application/manage-faqs.js';
 import { createFaqSchema, updateFaqSchema } from './faq-schemas.js';
+import { validationResponse } from '../../../shared/http/validation-response.js';
 
 export function createPublicFaqRouter(faqs: ManageFaqs) {
   const router = Router();
@@ -29,7 +30,15 @@ export function createAdminFaqRouter(faqs: ManageFaqs, sessionStore: SessionStor
     asyncHandler(async (request, response) => {
       const input = createFaqSchema.safeParse(request.body);
       if (!input.success) {
-        response.status(400).json({ error: 'Question ou réponse invalide.' });
+        response
+          .status(400)
+          .json(
+            validationResponse(
+              input.error,
+              { question: 'La question', answer: 'La réponse', position: 'La position' },
+              'La question n’a pas été enregistrée.',
+            ),
+          );
         return;
       }
       response.status(201).json(await faqs.create(input.data, response.locals.userId!));
@@ -41,7 +50,17 @@ export function createAdminFaqRouter(faqs: ManageFaqs, sessionStore: SessionStor
     asyncHandler(async (request, response) => {
       const input = updateFaqSchema.safeParse(request.body);
       if (!input.success || Object.keys(input.data ?? {}).length === 0) {
-        response.status(400).json({ error: 'Question ou réponse invalide.' });
+        response
+          .status(400)
+          .json(
+            input.success
+              ? { error: 'Aucune modification à enregistrer. Modifiez la question ou la réponse.' }
+              : validationResponse(
+                  input.error,
+                  { question: 'La question', answer: 'La réponse', position: 'La position' },
+                  'La modification n’a pas été enregistrée.',
+                ),
+          );
         return;
       }
       response.json(
