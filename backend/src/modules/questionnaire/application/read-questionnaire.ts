@@ -31,6 +31,7 @@ function isRecord(value: unknown): value is RecordValue {
 function normalizeQuestionnaire(value: unknown, service: ServiceName): unknown {
   if (!isRecord(value) || !Array.isArray(value.steps) || value.steps.length !== 5) return value;
 
+  const refreshDefaultCopy = value.version !== getQuestionnaire(service).version;
   const savedSteps = value.steps as unknown[];
   const questionsManaged = value.questionsManaged === true;
   const defaults = getQuestionnaire(service);
@@ -64,7 +65,9 @@ function normalizeQuestionnaire(value: unknown, service: ServiceName): unknown {
       const defaultQuestion = defaultQuestions.get(key);
       const question: RecordValue = {
         ...(defaultQuestion as unknown as RecordValue | undefined),
-        ...savedQuestion,
+        ...(refreshDefaultCopy && !questionsManaged && defaultQuestion
+          ? { ...savedQuestion, label: defaultQuestion.label }
+          : savedQuestion),
         key,
         type: defaultQuestion?.type ?? 'text',
         required: requiredQuestionKeys.has(key)
@@ -90,13 +93,27 @@ function normalizeQuestionnaire(value: unknown, service: ServiceName): unknown {
 
     return {
       ...defaultStep,
-      ...(isRecord(step) ? step : {}),
+      ...(isRecord(step)
+        ? {
+            ...step,
+            ...(refreshDefaultCopy && !questionsManaged ? { title: defaultStep.title } : {}),
+          }
+        : {}),
       number: defaultStep.number,
       questions,
     };
   });
 
-  return { ...defaults, ...value, version: defaults.version, service, steps };
+  return {
+    ...defaults,
+    ...value,
+    ...(refreshDefaultCopy && !questionsManaged
+      ? { title: defaults.title, introduction: defaults.introduction, notices: defaults.notices }
+      : {}),
+    version: defaults.version,
+    service,
+    steps,
+  };
 }
 
 export class ReadQuestionnaire {

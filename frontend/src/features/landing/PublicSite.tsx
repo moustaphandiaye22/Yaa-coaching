@@ -17,6 +17,8 @@ import GallerySection from '../gallery/GallerySection.js';
 import ReviewsSection from '../reviews/ReviewsSection.js';
 import FaqSection from '../faq/FaqSection.js';
 import QuestionnaireSection from '../questionnaire/QuestionnaireSection.js';
+import PlayerProgramSection from './PlayerProgramSection.js';
+import AutonomieProgramSection from './AutonomieProgramSection.js';
 import { mediaUrl } from '../../shared/site-content.js';
 import { usePublicSiteContent } from './usePublicSiteContent.js';
 
@@ -60,14 +62,14 @@ function PublicSite({
     'https://www.openstreetmap.org/export/embed.html?bbox=2.01%2C47.17%2C2.13%2C47.27&layer=mapnik&marker=47.221%2C2.069';
   const ServicesTitle = page === 'accompagnements' ? 'h1' : 'h2';
   const show = (...pages: string[]) => pages.includes(page);
-  const notify = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    setNotice(message);
-    setNoticeType(type);
-  };
   const startQuestionnaire = (situation?: string, service?: string) => {
     if (situation) setInitialSituation(situation);
     if (service) setInitialService(service);
     onNavigate('/questionnaire');
+  };
+  const notify = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+    setNotice(message);
+    setNoticeType(type);
   };
   const methodContent = contentFor('methode');
   const playerContent = contentFor('player');
@@ -263,22 +265,33 @@ function PublicSite({
                       </span>
                     </div>
                     <div className="service-content">
-                      <p className="eyebrow">
-                        {s.name} <span>·</span> {s.tag}
-                      </p>
-                      <h3>{s.heading}</h3>
-                      <p>{s.body}</p>
+                      <h3>{s.name}</h3>
+                      <p>{s.presentation || s.body}</p>
+                      {(s.offerHighlight || s.offerDetails) && (
+                        <p className="service-offer-details">
+                          {s.offerHighlight && <strong>{s.offerHighlight}</strong>}
+                          {s.offerDetails && (
+                            <>
+                              {s.offerHighlight && !/^\s/.test(s.offerDetails) ? ' ' : ''}
+                              {s.offerDetails.trimStart()}
+                            </>
+                          )}
+                        </p>
+                      )}
                       <div className="service-foot">
                         <span>{s.zone}</span>
                         <a
-                          href="/questionnaire"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            startQuestionnaire(s.questionnaireSituations[0], s.name);
-                          }}
+                          href={s.slug === 'autonomie' ? '#autonomie-details' : '/questionnaire'}
+                          onClick={
+                            s.slug === 'autonomie'
+                              ? undefined
+                              : (event) => {
+                                  event.preventDefault();
+                                  startQuestionnaire(s.questionnaireSituations[0], s.name);
+                                }
+                          }
                         >
                           {s.link}
-                          <ArrowUpRight size={15} />
                         </a>
                       </div>
                     </div>
@@ -396,6 +409,16 @@ function PublicSite({
                 })}
             </div>
           </section>
+        )}
+        {show('accompagnements') && contentStatus === 'ready' && (
+          <PlayerProgramSection onStart={() => startQuestionnaire('', 'YAA PLAYER')} />
+        )}
+        {show('accompagnements') && contentStatus === 'ready' && (
+          <AutonomieProgramSection
+            onStartQuestionnaire={() =>
+              startQuestionnaire('Préserver mon autonomie au quotidien', 'YAA AUTONOMIE')
+            }
+          />
         )}
         {show('coach') && contentStatus === 'ready' && (
           <section className="coach-section section-pad" id="coach">
@@ -541,8 +564,7 @@ function PublicSite({
                     }
               }
             >
-              {closingValue('buttonLabel', 'Faire le premier pas')}{' '}
-              <ArrowUpRight size={16} />
+              {closingValue('buttonLabel', 'Faire le premier pas')} <ArrowUpRight size={16} />
             </a>
             <span className="closing-star" aria-hidden="true">
               <Sparkles size={38} strokeWidth={1.2} />

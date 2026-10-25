@@ -249,6 +249,42 @@ const autonomyQuestions: Question[] = [
   },
 ];
 
+const playerStartingQuestions: Question[] = [
+  { key: 'playerJourney', label: 'Où en es-tu aujourd’hui dans ton parcours de footballeur ?', type: 'textarea' },
+  { key: 'playerEnjoyment', label: 'Qu’est-ce qui te plaît le plus dans le football ?', type: 'textarea' },
+  { key: 'playerDifficulties', label: 'Quelles situations te mettent en difficulté sur ou en dehors du terrain ?', type: 'textarea' },
+  { key: 'playerSupport', label: 'Sur quelles qualités ou personnes peux-tu t’appuyer ?', type: 'textarea' },
+];
+
+const autonomyStartingQuestions: Question[] = [
+  { key: 'autonomyDifficulties', label: 'Quelles situations du quotidien sont difficiles en ce moment ?', type: 'textarea' },
+  { key: 'autonomySupport', label: 'Quelles aides ou quels accompagnements sont déjà présents ?', type: 'textarea' },
+  { key: 'familyDistance', label: 'Dans quelle ville vit la famille, et à quelle distance du parent ?', type: 'textarea' },
+];
+
+const serviceGoals = (service: ServiceName | undefined) => {
+  if (!service || service === 'YAA COACHING') return goals;
+  const excluded = new Set(['weightLoss', 'kilos']);
+  const labels: Record<string, string> = service === 'YAA PLAYER'
+    ? {
+        expectations: 'Qu’attends-tu de ton accompagnement YAA PLAYER ?',
+        familyExpectations: 'Qu’attend ta famille de cet accompagnement ?',
+        goal: 'Quel est ton objectif prioritaire dans ton parcours de footballeur ?',
+        success: 'À quoi verras-tu que l’accompagnement t’aide à progresser ?',
+        whyGoal: 'Pourquoi cet objectif compte-t-il pour toi ?',
+      }
+    : {
+        expectations: 'Qu’attend la personne de cet accompagnement ?',
+        familyExpectations: 'Quelles sont les attentes de la famille ou des proches ?',
+        goal: 'Quel changement la personne aimerait-elle voir dans son quotidien ?',
+        success: 'À quoi verrez-vous que l’accompagnement lui est utile ?',
+        whyGoal: 'Pourquoi cet objectif compte-t-il pour la personne ?',
+      };
+  return goals
+    .filter((question) => !excluded.has(question.key))
+    .map((question) => ({ ...question, ...(labels[question.key] ? { label: labels[question.key] } : {}) }));
+};
+
 const goals: Question[] = [
   {
     key: 'expectations',
@@ -358,10 +394,34 @@ const organization: Question[] = [
 ];
 
 export function getQuestionnaire(service?: ServiceName) {
+  const player = service === 'YAA PLAYER';
+  const autonomy = service === 'YAA AUTONOMIE';
+  const commonQuestions = common.map((question) => {
+    const labels: Record<string, string> = player
+      ? {
+          approach: 'Qui fait la demande de bilan ?',
+          firstName: 'Prénom et nom du joueur',
+          age: 'Âge du joueur',
+          representative: 'Prénom du parent ou responsable légal et lien avec le joueur',
+          city: 'Ville et pays où vit le joueur',
+          situation: 'Quelle situation correspond le mieux à ta demande ?',
+        }
+      : autonomy
+        ? {
+            approach: 'Qui fait la demande de bilan ?',
+            firstName: 'Prénom et nom de la personne à accompagner',
+            age: 'Âge de la personne',
+            representative: 'Votre prénom et votre lien avec la personne',
+            city: 'Ville où vit votre parent',
+            situation: 'Quelle situation correspond le mieux à votre demande ?',
+          }
+        : {};
+    return { ...question, ...(labels[question.key] ? { label: labels[question.key] } : {}) };
+  });
   const branch =
-    service === 'YAA PLAYER'
+    player
       ? playerQuestions
-      : service === 'YAA AUTONOMIE'
+      : autonomy
         ? autonomyQuestions
         : [
             {
@@ -375,23 +435,65 @@ export function getQuestionnaire(service?: ServiceName) {
               type: 'textarea' as const,
             },
           ];
+  const goalQuestions = serviceGoals(service);
+  const playerTitle = 'Bilan découverte YAA PLAYER';
+  const autonomyTitle = 'Bilan découverte YAA AUTONOMIE';
   return {
-    version: 'v3',
-    title: 'Questionnaire de découverte YAA COACHING',
-    introduction:
-      'Vos besoins physiques et mentaux, vos envies, vos difficultés et votre rythme : construisons un point de départ qui vous ressemble.',
+    version: 'v4',
+    title: player
+      ? playerTitle
+      : autonomy
+        ? autonomyTitle
+        : 'Bilan découverte YAA COACHING',
+    introduction: player
+      ? 'Un premier échange pour comprendre ton parcours de footballeur, tes envies, tes objectifs et les priorités qui te correspondent. Le bilan est gratuit et sans engagement.'
+      : autonomy
+        ? 'Un premier échange pour écouter la personne, comprendre ses envies et ses besoins, et prendre en compte sa famille si elle le souhaite. Le bilan est gratuit et sans engagement.'
+        : 'Vos besoins physiques et mentaux, vos envies, vos difficultés et votre rythme : construisons un point de départ qui vous ressemble.',
     service: service ?? null,
     maxPriorities: 3,
     steps: [
-      { number: 1, title: 'Faisons connaissance', questions: common },
-      { number: 2, title: 'Votre point de départ', questions: generalQuestions },
-      { number: 3, title: 'Précisons votre accompagnement', questions: branch },
-      { number: 4, title: 'Vos attentes et vos objectifs', questions: goals },
-      { number: 5, title: 'Comment cheminer ensemble ?', questions: organization },
+      {
+        number: 1,
+        title: player ? 'Faisons connaissance avec le joueur' : autonomy ? 'Faisons connaissance avec la personne' : 'Faisons connaissance',
+        questions: commonQuestions,
+      },
+      {
+        number: 2,
+        title: player ? 'Ton parcours de footballeur' : autonomy ? 'Le quotidien de votre parent' : 'Votre point de départ',
+        questions: player ? playerStartingQuestions : autonomy ? autonomyStartingQuestions : generalQuestions,
+      },
+      {
+        number: 3,
+        title: player ? 'Ton football et tes priorités' : autonomy ? 'Ses envies et son autonomie' : 'Précisons votre accompagnement',
+        questions: branch,
+      },
+      {
+        number: 4,
+        title: player ? 'Tes objectifs de progression' : autonomy ? 'Les attentes de la personne et de ses proches' : 'Vos attentes et vos objectifs',
+        questions: goalQuestions,
+      },
+      {
+        number: 5,
+        title: player ? 'Organisons ton accompagnement' : autonomy ? 'Organisons les visites et les échanges' : 'Comment cheminer ensemble ?',
+        questions: organization,
+      },
     ],
-    notices: [
-      'Évitez les informations médicales.',
-      'Pour un mineur, le premier contact se fait avec un parent ou responsable légal.',
-    ],
+    notices: player
+      ? [
+          'Ce bilan gratuit n’est pas un examen sportif. Réponds avec tes mots ; tu peux aussi répondre « je ne sais pas encore ».',
+          'Pour un joueur mineur, la demande doit être initiée par son parent ou responsable légal. Le joueur reste au centre de son projet.',
+          'Évite de transmettre des informations médicales.',
+        ]
+      : autonomy
+        ? [
+            'La demande peut être initiée par un proche, mais l’accompagnement se construit avec l’accord de la personne concernée.',
+            'Les échanges avec la famille sont définis avec la personne, dans le respect de sa vie privée.',
+            'Évite de transmettre des informations médicales.',
+          ]
+        : [
+            'Évitez les informations médicales.',
+            'Pour un mineur, le premier contact se fait avec un parent ou responsable légal.',
+          ],
   };
 }

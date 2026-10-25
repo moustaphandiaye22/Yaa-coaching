@@ -109,6 +109,9 @@ const fieldLabels: Record<string, string> = {
   slug: 'Identifiant URL',
   type: 'Catégorie',
   zone: 'Zone',
+  presentation: 'Présentation de l’accompagnement',
+  offerHighlight: 'Tarif mis en valeur',
+  offerDetails: 'Tarifs et modalités',
   image: 'Image',
   alt: 'Texte alternatif',
   link: 'Lien',
@@ -517,7 +520,10 @@ function ContentValueEditor({
   }
   const longText =
     typeof value === 'string' &&
-    (value.length > 110 || ['description', 'body', 'introduction', 'label'].includes(key));
+    (value.length > 110 ||
+      ['description', 'body', 'introduction', 'label', 'presentation', 'offerDetails'].includes(
+        key,
+      ));
   if (typeof value === 'string' && ['image', 'photo', 'imageUrl'].includes(key.toLowerCase())) {
     return (
       <ContentImageField

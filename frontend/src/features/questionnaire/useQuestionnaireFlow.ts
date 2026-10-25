@@ -276,6 +276,9 @@ export function useQuestionnaireFlow(
     if (submitting) return;
     setSubmitting(true);
     try {
+      const activeQuestionKeys = new Set(
+        activeQuestionnaire?.steps.flat().map((question) => question.key) ?? [],
+      );
       const result = await requestJson<{ message: string }>('/api/public/submissions', {
         method: 'POST',
         body: JSON.stringify({
@@ -286,7 +289,7 @@ export function useQuestionnaireFlow(
           contactPhone: answers.contactPhone || '',
           answers: Object.fromEntries(
             Object.entries(answers).filter(
-              ([key]) => key !== 'consent' && key !== 'guardianConsent',
+              ([key]) => activeQuestionKeys.has(key),
             ),
           ),
           consent: true,

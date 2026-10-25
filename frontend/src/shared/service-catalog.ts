@@ -9,6 +9,9 @@ export type ServiceData = {
   heading: string;
   body: string;
   zone: string;
+  presentation?: string;
+  offerHighlight?: string;
+  offerDetails?: string;
   image: string;
   alt: string;
   accent: string;
@@ -23,6 +26,9 @@ type ServiceRecord = {
   title: string;
   description: string;
   zone: string;
+  presentation?: string;
+  offerHighlight?: string;
+  offerDetails?: string;
   image: string;
   alt: string;
   accent: string;
@@ -45,6 +51,9 @@ export function useServiceCatalog() {
             heading: record.title,
             body: record.description,
             zone: record.zone,
+            presentation: record.presentation,
+            offerHighlight: record.offerHighlight,
+            offerDetails: record.offerDetails,
             image: record.image,
             alt: record.alt,
             accent: record.accent,

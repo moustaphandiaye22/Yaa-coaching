@@ -43,6 +43,23 @@ export default function QuestionnaireSection({
     continueToNextStep,
     submitIfValid,
   } = useQuestionnaireFlow(initialSituation, initialService, onNotice);
+  const isPlayer = service === 'YAA PLAYER';
+  const isAutonomy = service === 'YAA AUTONOMIE';
+  const formEyebrow = isPlayer
+    ? 'YAA PLAYER · BILAN DÉCOUVERTE DU JOUEUR'
+    : isAutonomy
+      ? 'YAA AUTONOMIE · BILAN DÉCOUVERTE À DOMICILE'
+      : 'YAA COACHING · BILAN DÉCOUVERTE';
+  const formPrompt = isPlayer
+    ? 'Parle-nous de ton football, de tes objectifs et de ce qui compte pour toi. Le bilan est gratuit et sans engagement.'
+    : isAutonomy
+      ? 'Parlons des envies et des besoins de la personne, avec son accord. Le bilan est gratuit et sans engagement.'
+      : 'Vos besoins physiques et mentaux, vos envies, vos difficultés et votre rythme : préparons un échange qui vous ressemble.';
+  const progressPrompt = isPlayer
+    ? 'Réponds avec tes mots. Il n’y a pas de bonne ou de mauvaise réponse.'
+    : isAutonomy
+      ? 'La personne peut répondre elle-même ou avec l’aide d’un proche de confiance.'
+      : 'Prenez le temps qui vous convient. Vos réponses prépareront le premier échange.';
 
   function field(question: Question) {
     const value = answers[question.key] ?? '';
@@ -200,12 +217,12 @@ export default function QuestionnaireSection({
     <section className="questionnaire-section section-pad" id="questionnaire">
       <div className="questionnaire-heading">
         <div>
-          <p className="eyebrow">YAA COACHING · ACCOMPAGNEMENT PHYSIQUE & MENTAL</p>
+          <p className="eyebrow">{formEyebrow}</p>
           <h1>{questionnaireTitle}</h1>
         </div>
         <div>
           <p className="eyebrow">UN PREMIER ÉCHANGE</p>
-          <p>{questionnaireIntroduction}</p>
+          <p>{questionnaireIntroduction || formPrompt}</p>
           {questionnaireNotices.map((notice) => (
             <p key={notice}>{notice}</p>
           ))}
@@ -230,8 +247,7 @@ export default function QuestionnaireSection({
           <p className="eyebrow">ÉTAPE {step + 1} SUR 5</p>
           <h3>{titles[step] ?? 'Questionnaire de découverte'}</h3>
           <p>
-            Un questionnaire pour préparer un échange qui part de vous. Prenez le temps qui vous
-            convient.
+            {progressPrompt}
           </p>
           <div className="privacy-note">
             <ShieldCheck size={17} />
@@ -243,7 +259,7 @@ export default function QuestionnaireSection({
         </aside>
         <div className="questionnaire-form">
           <div className="form-topline">
-            <span>QUESTIONNAIRE YAA COACHING</span>
+            <span>QUESTIONNAIRE {service}</span>
             <span>LES CHAMPS AVEC * SONT NÉCESSAIRES</span>
           </div>
           {step === 2 && (
@@ -272,9 +288,11 @@ export default function QuestionnaireSection({
                 {service === 'YAA PLAYER' ? 'Sans limite géographique' : 'Vierzon et alentours'}
               </b>
               <p>
-                Pour une personne mineure, le formulaire doit être rempli par son parent ou
-                responsable légal. Les réponses ne seront pas partagées par e-mail sans votre
-                accord.
+                {isPlayer
+                  ? 'Pour un joueur mineur, le formulaire doit être rempli par son parent ou responsable légal. Le joueur reste au centre de son projet.'
+                  : isAutonomy
+                    ? 'Un proche peut remplir cette demande, avec l’accord de la personne concernée. Les échanges avec la famille sont définis avec elle.'
+                    : 'Pour une personne mineure, le formulaire doit être rempli par son parent ou responsable légal. Vos réponses ne seront pas partagées par e-mail sans votre accord.'}
               </p>
             </div>
           )}
