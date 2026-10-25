@@ -16,6 +16,7 @@ import {
 import type { ReactNode } from 'react';
 import { requestJson, type AdminApi } from '../../shared/api-client.js';
 import { mediaUrl } from '../../shared/site-content.js';
+import { funnelLinks } from '../../shared/funnel-links.js';
 import AdminListToolbar from './AdminListToolbar.js';
 import { matchesAdminSearch } from './admin-list-utils.js';
 
@@ -371,6 +372,7 @@ function ContentValueEditor({
   disabled,
   onUploadingChange,
   questionnaireEditor,
+  funnelHref,
   onChange,
 }: {
   value: unknown;
@@ -379,6 +381,7 @@ function ContentValueEditor({
   disabled: boolean;
   onUploadingChange: (uploading: boolean) => void;
   questionnaireEditor: boolean;
+  funnelHref: string;
   onChange: (path: (string | number)[], next: unknown) => void;
 }): ReactNode {
   const key = String(path[path.length - 1] ?? '');
@@ -418,6 +421,7 @@ function ContentValueEditor({
                     disabled={disabled}
                     onUploadingChange={onUploadingChange}
                     questionnaireEditor={questionnaireEditor}
+                    funnelHref={funnelHref}
                     onChange={onChange}
                   />
                   <button
@@ -499,6 +503,7 @@ function ContentValueEditor({
             disabled={disabled}
             onUploadingChange={onUploadingChange}
             questionnaireEditor={questionnaireEditor}
+            funnelHref={funnelHref}
             onChange={onChange}
           />
         ))}
@@ -542,7 +547,7 @@ function ContentValueEditor({
           <span>{pathLabel(path)}</span>
           <input value={value} onChange={(event) => onChange(path, event.target.value)} />
         </label>
-        <a className="button button-dark" href="/questionnaire" target="_blank" rel="noreferrer">
+        <a className="button button-dark" href={funnelHref} target="_blank" rel="noreferrer">
           {value || 'Faire le premier pas'} <ArrowUpRight size={15} aria-hidden="true" />
         </a>
       </div>
@@ -974,6 +979,13 @@ export default function AdminContentPanel({
                     query={search}
                     disabled={busy}
                     questionnaireEditor={contentKey === 'questionnaires'}
+                    funnelHref={
+                      contentKey === 'player'
+                        ? funnelLinks.player
+                        : contentKey === 'coach' || contentKey === 'methode'
+                          ? funnelLinks.coaching
+                          : funnelLinks.offers
+                    }
                     onUploadingChange={(uploading) =>
                       setPendingUploads((count) => Math.max(0, count + (uploading ? 1 : -1)))
                     }

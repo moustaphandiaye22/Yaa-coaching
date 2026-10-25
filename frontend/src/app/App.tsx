@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Admin from '../features/admin/Admin.js';
 import PublicSite from '../features/landing/PublicSite.js';
+import { funnelLinks } from '../shared/funnel-links.js';
 
 const PUBLIC_ROUTES = [
   '/',
@@ -35,6 +36,10 @@ export default function App() {
     return () => window.removeEventListener('popstate', updateRoute);
   }, []);
 
+  useEffect(() => {
+    if (route === '/questionnaire') window.location.replace(funnelLinks.offers);
+  }, [route]);
+
   function navigate(path: string) {
     const nextPath = path.replace(/\/$/, '') || '/';
     const destination =
@@ -46,6 +51,7 @@ export default function App() {
   }
 
   if (route.startsWith('/admin')) return <Admin onNavigate={navigate} />;
+  if (route === '/questionnaire') return null;
   return (
     <PublicSite
       route={route}

@@ -1,5 +1,6 @@
 import { ArrowUpRight, Facebook, Instagram, Linkedin, Music2 } from 'lucide-react';
 import { usePublicContact } from '../use-public-contact.js';
+import { funnelLinks } from '../funnel-links.js';
 
 const socialLinks = [
   {
@@ -18,6 +19,7 @@ const socialLinks = [
     href: 'https://www.linkedin.com/in/yaa-coaching-coaching-physique-et-mental-509a97363/',
     Icon: Linkedin,
   },
+  { label: 'Offres et bilans Systeme.io', href: funnelLinks.offers, Icon: ArrowUpRight },
 ];
 
 export default function SiteFooter() {

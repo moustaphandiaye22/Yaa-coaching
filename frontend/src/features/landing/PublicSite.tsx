@@ -16,10 +16,9 @@ import SiteFooter from '../../shared/components/SiteFooter.js';
 import GallerySection from '../gallery/GallerySection.js';
 import ReviewsSection from '../reviews/ReviewsSection.js';
 import FaqSection from '../faq/FaqSection.js';
-import QuestionnaireSection from '../questionnaire/QuestionnaireSection.js';
-import PlayerProgramSection from './PlayerProgramSection.js';
-import AutonomieProgramSection from './AutonomieProgramSection.js';
+import PlayerCoachSection from './PlayerCoachSection.js';
 import { mediaUrl } from '../../shared/site-content.js';
+import { funnelLinkForService, funnelLinks } from '../../shared/funnel-links.js';
 import { usePublicSiteContent } from './usePublicSiteContent.js';
 
 function PublicSite({
@@ -35,8 +34,6 @@ function PublicSite({
 }) {
   const [notice, setNotice] = useState('');
   const [noticeType, setNoticeType] = useState<'success' | 'error' | 'info'>('info');
-  const [initialSituation, setInitialSituation] = useState('');
-  const [initialService, setInitialService] = useState('');
   const {
     heroValue,
     heroAvailable,
@@ -62,18 +59,12 @@ function PublicSite({
     'https://www.openstreetmap.org/export/embed.html?bbox=2.01%2C47.17%2C2.13%2C47.27&layer=mapnik&marker=47.221%2C2.069';
   const ServicesTitle = page === 'accompagnements' ? 'h1' : 'h2';
   const show = (...pages: string[]) => pages.includes(page);
-  const startQuestionnaire = (situation?: string, service?: string) => {
-    if (situation) setInitialSituation(situation);
-    if (service) setInitialService(service);
-    onNavigate('/questionnaire');
-  };
   const notify = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setNotice(message);
     setNoticeType(type);
   };
   const methodContent = contentFor('methode');
   const playerContent = contentFor('player');
-  const coachContent = contentFor('coach');
   const zonesContent = contentFor('zones');
   const contactContent = contentFor('contacts');
   const servicesBlock = contentFor('services');
@@ -155,7 +146,7 @@ function PublicSite({
               <p className="hero-lead">{heroValue('description')}</p>
               <p className="hero-loc">{heroValue('location')}</p>
               <div className="hero-actions">
-                <a className="button button-dark" href="/accompagnements">
+                <a className="button button-dark" href={funnelLinks.offers}>
                   {heroValue('buttonLabel')} <ArrowUpRight size={16} />
                 </a>
                 <span className="hero-caption">
@@ -163,13 +154,13 @@ function PublicSite({
                 </span>
               </div>
               <div className="hero-shortcuts">
-                <a href="/accompagnements">
+                <a href={funnelLinks.coaching}>
                   <span>Reprendre une activité</span> <ArrowUpRight size={14} />
                 </a>
-                <a href="/accompagnements">
+                <a href={funnelLinks.player}>
                   <span>Progresser au football</span> <ArrowUpRight size={14} />
                 </a>
-                <a href="/accompagnements">
+                <a href={funnelLinks.autonomie}>
                   <span>Préserver l’autonomie</span> <ArrowUpRight size={14} />
                 </a>
               </div>
@@ -280,17 +271,7 @@ function PublicSite({
                       )}
                       <div className="service-foot">
                         <span>{s.zone}</span>
-                        <a
-                          href={s.slug === 'autonomie' ? '#autonomie-details' : '/questionnaire'}
-                          onClick={
-                            s.slug === 'autonomie'
-                              ? undefined
-                              : (event) => {
-                                  event.preventDefault();
-                                  startQuestionnaire(s.questionnaireSituations[0], s.name);
-                                }
-                          }
-                        >
+                        <a href={funnelLinkForService(s.slug)}>
                           {s.link}
                         </a>
                       </div>
@@ -366,14 +347,7 @@ function PublicSite({
               </div>
               <a
                 className="text-link"
-                href="/questionnaire"
-                onClick={(event) => {
-                  event.preventDefault();
-                  startQuestionnaire(
-                    String(playerContent.questionnaireSituation ?? ''),
-                    'YAA PLAYER',
-                  );
-                }}
+                href={funnelLinks.player}
               >
                 {String(playerContent.callToAction ?? '')} <ArrowUpRight size={16} />
               </a>
@@ -410,78 +384,7 @@ function PublicSite({
             </div>
           </section>
         )}
-        {show('accompagnements') && contentStatus === 'ready' && (
-          <PlayerProgramSection onStart={() => startQuestionnaire('', 'YAA PLAYER')} />
-        )}
-        {show('accompagnements') && contentStatus === 'ready' && (
-          <AutonomieProgramSection
-            onStartQuestionnaire={() =>
-              startQuestionnaire('Préserver mon autonomie au quotidien', 'YAA AUTONOMIE')
-            }
-          />
-        )}
-        {show('coach') && contentStatus === 'ready' && (
-          <section className="coach-section section-pad" id="coach">
-            <div className="coach-image">
-              {mediaFor('YAA COACHING') ? (
-                <img
-                  src={mediaUrl(mediaFor('YAA COACHING')!.url)}
-                  alt={mediaFor('YAA COACHING')!.alt}
-                  loading="lazy"
-                />
-              ) : (
-                <div className="editorial-image-placeholder coach-placeholder" aria-hidden="true" />
-              )}
-              <span className="coach-seal">{String(coachContent.photoSeal ?? '')}</span>
-              <span className="coach-caption">
-                {String(coachContent.photoCaption ?? '')}{' '}
-                <small>{String(coachContent.photoLocation ?? '')}</small>
-              </span>
-            </div>
-            <div className="coach-copy">
-              <p className="eyebrow">{String(coachContent.eyebrow ?? '')}</p>
-              <h1 className="copy-preserve-lines">{String(coachContent.title ?? '')}</h1>
-              {Array.isArray(coachContent.paragraphs) &&
-                coachContent.paragraphs.map((paragraph, index) => (
-                  <p key={index}>{String(paragraph)}</p>
-                ))}
-              <a
-                className="text-link"
-                href="/questionnaire"
-                onClick={(event) => {
-                  event.preventDefault();
-                  startQuestionnaire();
-                }}
-              >
-                {String(coachContent.callToAction ?? '')} <ArrowUpRight size={16} />
-              </a>
-              <div className="experience-grid">
-                {Array.isArray(coachContent.experiences) &&
-                  coachContent.experiences.map((item, index) => {
-                    const experience = item as {
-                      label?: string;
-                      title?: string;
-                      description?: string;
-                    };
-                    return (
-                      <div key={experience.label ?? index}>
-                        <small>{experience.label}</small>
-                        <b>{experience.title}</b>
-                        <span>{experience.description}</span>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
-          </section>
-        )}
-        {show('questionnaire') && (
-          <QuestionnaireSection
-            initialSituation={initialSituation}
-            initialService={initialService}
-            onNotice={notify}
-          />
-        )}
+        {show('coach') && contentStatus === 'ready' && <PlayerCoachSection />}
         {show('accompagnements') && contentStatus === 'ready' && (
           <section className="zones-section section-pad">
             <div className="zones-left">
@@ -540,10 +443,8 @@ function PublicSite({
           'home',
           'accompagnements',
           'methode',
-          'coach',
           'galerie',
           'avis',
-          'questionnaire',
         ) && (
           <section className="closing-cta" aria-labelledby="public-closing-title">
             <p className="eyebrow">{closingValue('eyebrow', 'UN PREMIER ÉCHANGE')}</p>
@@ -554,15 +455,7 @@ function PublicSite({
             </h2>
             <a
               className="button button-cream"
-              href={show('questionnaire') ? '#questionnaire' : '/questionnaire'}
-              onClick={
-                show('questionnaire')
-                  ? undefined
-                  : (event) => {
-                      event.preventDefault();
-                      startQuestionnaire();
-                    }
-              }
+              href={funnelLinks.offers}
             >
               {closingValue('buttonLabel', 'Faire le premier pas')} <ArrowUpRight size={16} />
             </a>
