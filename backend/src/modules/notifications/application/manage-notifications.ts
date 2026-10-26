@@ -1,5 +1,4 @@
 import type {
-  NotificationDispatcher,
   NotificationKind,
   NotificationListFilter,
   NotificationListStatus,
@@ -19,10 +18,7 @@ function normalizeSearch(value: string) {
 }
 
 export class ManageNotifications {
-  constructor(
-    private readonly notifications: NotificationRepository,
-    private readonly dispatcher: NotificationDispatcher,
-  ) {}
+  constructor(private readonly notifications: NotificationRepository) {}
 
   list(page: number, size: number, filter: { status?: string; query?: string } = {}) {
     if (
@@ -51,9 +47,5 @@ export class ManageNotifications {
       ...(query ? { query, matchingKinds } : {}),
     };
     return this.notifications.list(page, size, listFilter);
-  }
-  async retry() {
-    await this.notifications.resetFailed();
-    return this.dispatcher.dispatchPending(50);
   }
 }

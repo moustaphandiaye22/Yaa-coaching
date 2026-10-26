@@ -5,9 +5,7 @@ import {
   assertProductionPrivacyConfiguration,
   applyRetentionPolicy,
 } from './modules/submissions/application/retention-policy.js';
-import { ResendNotificationDispatcher } from './modules/notifications/infrastructure/resend-notification-dispatcher.js';
 import { blindIndex } from './shared/security/encryption.js';
-import { PrismaNotificationRepository } from './modules/notifications/infrastructure/prisma-notification-repository.js';
 import { PrismaRetentionRepository } from './modules/submissions/infrastructure/prisma-retention-repository.js';
 
 if (!process.env.DATA_ENCRYPTION_KEY)
@@ -19,14 +17,7 @@ const port = Number(process.env.PORT ?? 3000);
 const server = app.listen(port, () =>
   console.log(`YAA API disponible sur http://localhost:${port}`),
 );
-const notifications = new PrismaNotificationRepository(prisma);
 const retention = new PrismaRetentionRepository(prisma);
-const dispatcher = new ResendNotificationDispatcher(notifications);
-const dispatchTimer = setInterval(() => {
-  void dispatcher
-    .dispatchPending()
-    .catch(() => console.error('Échec du traitement des notifications.'));
-}, 60_000);
 const retentionTimer = setInterval(
   () => {
     void applyRetentionPolicy(retention).catch(() =>
@@ -35,16 +26,12 @@ const retentionTimer = setInterval(
   },
   24 * 60 * 60 * 1000,
 );
-void dispatcher
-  .dispatchPending()
-  .catch(() => console.error('Échec du traitement initial des notifications.'));
 void applyRetentionPolicy(retention).catch(() =>
   console.error('Échec de la tâche initiale de conservation des données.'),
 );
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {
-    clearInterval(dispatchTimer);
     clearInterval(retentionTimer);
     server.close(() => {
       void prisma.$disconnect().finally(() => process.exit(0));

@@ -65,8 +65,15 @@ function PublicSite({
   };
   const methodContent = contentFor('methode');
   const playerContent = contentFor('player');
+  const coachContent = contentFor('coach');
   const zonesContent = contentFor('zones');
   const contactContent = contentFor('contacts');
+  const zonesContactEmail =
+    typeof zonesContent.contactEmail === 'string' && zonesContent.contactEmail.trim()
+      ? zonesContent.contactEmail.trim()
+      : typeof contactContent.email === 'string'
+        ? contactContent.email.trim()
+        : '';
   const servicesBlock = contentFor('services');
   const servicesSection = (servicesBlock.section ?? {}) as Record<string, unknown>;
   const closingContent = contentFor('closing');
@@ -233,11 +240,18 @@ function PublicSite({
             <div className="service-grid">
               {serviceContent.map((s, i) => {
                 const photo = mediaFor(s.name);
+                const serviceImage = s.image && (s.image.startsWith('/') || /^https?:\/\//i.test(s.image))
+                  ? s.image
+                  : '';
                 return (
                   <article key={s.name} id={s.slug} className={`service-card ${s.accent}`}>
                     <div className="service-image-wrap">
-                      {photo ? (
-                        <img src={mediaUrl(photo.url)} alt={photo.alt} loading="lazy" />
+                      {photo || serviceImage ? (
+                        <img
+                          src={mediaUrl(photo?.url ?? serviceImage)}
+                          alt={photo?.alt ?? s.alt}
+                          loading="lazy"
+                        />
                       ) : (
                         <div
                           className={`service-image-placeholder ${s.accent}`}
@@ -256,7 +270,7 @@ function PublicSite({
                       </span>
                     </div>
                     <div className="service-content">
-                      <h3>{s.name}</h3>
+                      <h3>{s.heading || s.name}</h3>
                       <p>{s.presentation || s.body}</p>
                       {(s.offerHighlight || s.offerDetails) && (
                         <p className="service-offer-details">
@@ -314,7 +328,7 @@ function PublicSite({
           </section>
         )}
         {show('accompagnements') && contentStatus === 'ready' && (
-          <section className="player-feature section-pad" id="player">
+          <section className="player-feature section-pad">
             <div className="player-visual">
               {mediaFor('YAA PLAYER') ? (
                 <img
@@ -384,7 +398,9 @@ function PublicSite({
             </div>
           </section>
         )}
-        {show('coach') && contentStatus === 'ready' && <PlayerCoachSection />}
+        {show('coach') && contentStatus === 'ready' && (
+          <PlayerCoachSection content={coachContent} />
+        )}
         {show('accompagnements') && contentStatus === 'ready' && (
           <section className="zones-section section-pad">
             <div className="zones-left">
@@ -395,8 +411,8 @@ function PublicSite({
                 <em>{String(zonesContent.accent ?? '')}</em>
               </h2>
               <p>{String(zonesContent.introduction ?? '')}</p>
-              {typeof contactContent.email === 'string' && contactContent.email && (
-                <a className="text-link" href={`mailto:${contactContent.email}`}>
+              {zonesContactEmail && (
+                <a className="text-link" href={`mailto:${zonesContactEmail}`}>
                   {String(zonesContent.contactLabel ?? '')} <ArrowUpRight size={15} />
                 </a>
               )}

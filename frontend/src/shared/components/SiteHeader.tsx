@@ -16,7 +16,6 @@ import {
   X,
 } from 'lucide-react';
 import { ApiError, requestJson } from '../api-client.js';
-import AdminNotificationBell, { type AdminNotificationEvent } from './AdminNotificationBell.js';
 
 type AuthenticatedUser = { email: string; role: string };
 
@@ -41,8 +40,6 @@ export default function SiteHeader({ activeRoute, mobileNavOpen, onToggle, onNav
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [logoutPending, setLogoutPending] = useState(false);
   const [accountError, setAccountError] = useState('');
-  const [notificationCount, setNotificationCount] = useState(0);
-  const [notificationEvents, setNotificationEvents] = useState<AdminNotificationEvent[]>([]);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
   const refreshAccount = useCallback(async () => {
@@ -55,46 +52,6 @@ export default function SiteHeader({ activeRoute, mobileNavOpen, onToggle, onNav
       if (error instanceof ApiError && error.status === 401) setUser(null);
     }
   }, []);
-
-  const refreshNotifications = useCallback(async () => {
-    try {
-      const [audit, newSubmissions, reviews] = await Promise.all([
-        requestJson<{ items: AdminNotificationEvent[]; nextCursor: string | null }>(
-          '/api/admin/audit',
-          { credentials: 'include' },
-        ),
-        requestJson<{ total: number }>('/api/admin/submissions?status=NEW&size=1', {
-          credentials: 'include',
-        }),
-        requestJson<{ status: string }[]>('/api/admin/reviews', { credentials: 'include' }),
-      ]);
-      setNotificationEvents(
-        audit.items.filter((event) =>
-          ['SUBMISSION_CREATED', 'REVIEW_SUBMITTED'].includes(event.action),
-        ),
-      );
-      setNotificationCount(
-        newSubmissions.total + reviews.filter((review) => review.status === 'PENDING').length,
-      );
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        setUser(null);
-        setNotificationCount(0);
-        setNotificationEvents([]);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!user) {
-      setNotificationCount(0);
-      setNotificationEvents([]);
-      return;
-    }
-    void refreshNotifications();
-    const interval = window.setInterval(() => void refreshNotifications(), 30_000);
-    return () => window.clearInterval(interval);
-  }, [refreshNotifications, user]);
 
   useEffect(() => {
     void refreshAccount();
@@ -198,20 +155,6 @@ export default function SiteHeader({ activeRoute, mobileNavOpen, onToggle, onNav
         ))}
         {user ? (
           <>
-            <AdminNotificationBell
-              className="public-notification-center"
-              count={notificationCount}
-              events={notificationEvents}
-              onSelectEvent={(event) => {
-                setAccountMenuOpen(false);
-                if (event.action === 'SUBMISSION_CREATED' && event.entityId) {
-                  onNavigate(`/admin/demandes/${encodeURIComponent(event.entityId)}`);
-                } else {
-                  onNavigate('/admin/avis');
-                }
-              }}
-              onViewAll={() => onNavigate('/admin/notifications')}
-            />
             <div className="account-menu" ref={accountMenuRef}>
               <button
                 className="account-menu-trigger"

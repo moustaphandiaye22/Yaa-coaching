@@ -61,7 +61,6 @@ import { LocalMediaStorage } from './modules/media/infrastructure/local-media-st
 import { createAdminUserRouter } from './modules/users/presentation/user-routes.js';
 import { PrismaUserManagementRepository } from './modules/users/infrastructure/prisma-user-management-repository.js';
 import { Argon2PasswordHasher } from './modules/auth/infrastructure/argon2-password-hasher.js';
-import { ResendNotificationDispatcher } from './modules/notifications/infrastructure/resend-notification-dispatcher.js';
 import { createAdminNotificationRouter } from './modules/notifications/presentation/notification-routes.js';
 import { PrismaNotificationRepository } from './modules/notifications/infrastructure/prisma-notification-repository.js';
 import { ManageNotifications } from './modules/notifications/application/manage-notifications.js';
@@ -215,8 +214,7 @@ const userManager = new ManageUsers(
 );
 app.use('/api/admin/users', createAdminUserRouter(userManager, sessions));
 const notificationRepository = new PrismaNotificationRepository(prisma);
-const notificationDispatcher = new ResendNotificationDispatcher(notificationRepository);
-const manageNotifications = new ManageNotifications(notificationRepository, notificationDispatcher);
+const manageNotifications = new ManageNotifications(notificationRepository);
 app.use('/api/admin/notifications', createAdminNotificationRouter(manageNotifications, sessions));
 app.use(errorHandler);
 

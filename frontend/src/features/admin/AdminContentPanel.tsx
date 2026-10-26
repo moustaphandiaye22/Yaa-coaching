@@ -17,6 +17,8 @@ import type { ReactNode } from 'react';
 import { requestJson, type AdminApi } from '../../shared/api-client.js';
 import { mediaUrl } from '../../shared/site-content.js';
 import { funnelLinks } from '../../shared/funnel-links.js';
+import { defaultSocialLinks, safeSocialUrl } from '../../shared/social-links.js';
+import { defaultCoachJourney, defaultCoachQualifications } from '../../shared/coach-journey.js';
 import AdminListToolbar from './AdminListToolbar.js';
 import { matchesAdminSearch } from './admin-list-utils.js';
 
@@ -67,6 +69,8 @@ const contentBlockLabels: Record<string, string> = {
   pillars: 'Axes de travail',
   steps: 'Étapes',
   experiences: 'Expériences',
+  journey: 'Parcours de terrain',
+  qualifications: 'Qualifications et parcours football',
   photo: 'Photo',
   footer: 'Pied de page',
   contact: 'Contact',
@@ -106,6 +110,11 @@ const fieldLabels: Record<string, string> = {
   footerCoaching: 'Texte du pied de page · Coaching',
   footerPlayer: 'Texte du pied de page · Player',
   footerSignature: 'Signature du pied de page',
+  instagramUrl: 'Compte Instagram',
+  tiktokUrl: 'Compte TikTok',
+  facebookUrl: 'Compte Facebook',
+  linkedinUrl: 'Compte LinkedIn',
+  whatsappUrl: 'Contact WhatsApp',
   name: 'Nom',
   slug: 'Identifiant URL',
   type: 'Catégorie',
@@ -564,7 +573,7 @@ function ContentValueEditor({
         />
       ) : (
         <input
-          type={typeof value === 'number' ? 'number' : 'text'}
+          type={typeof value === 'number' ? 'number' : key.endsWith('Url') ? 'url' : 'text'}
           value={value === null ? '' : String(value ?? '')}
           onChange={(event) =>
             onChange(
@@ -806,9 +815,16 @@ export default function AdminContentPanel({
     serviceIndex !== undefined && typeof draft.name === 'string'
       ? draft.name
       : (contentBlockLabels[contentKey] ?? 'Page du site');
-  const visibleDraftEntries = Object.entries(draft).filter(([key, value]) =>
-    contentMatchesSearch(value, [key], search),
-  );
+  const visibleDraftEntries = Object.entries(draft).filter(([key, value]) => {
+    if (contentKey === 'player' && key === 'questionnaireSituation') return false;
+    if (
+      contentKey === 'services' &&
+      serviceIndex !== undefined &&
+      ['questionnaireSituations', 'type'].includes(key)
+    )
+      return false;
+    return contentMatchesSearch(value, [key], search);
+  });
   const visibleQuestionnaire =
     isRecord(activeQuestionnaire) &&
     contentMatchesSearch(activeQuestionnaire, ['items', activeQuestionnaireService], search);
@@ -830,12 +846,32 @@ export default function AdminContentPanel({
     const nextDraft =
       serviceIndex !== undefined && Array.isArray(storedServices)
         ? storedServices[serviceIndex]
-        : (block?.content ?? (contentKey === 'hero' ? starterHero : {}));
+        : contentKey === 'contacts'
+          ? { ...defaultSocialLinks, ...(block?.content ?? {}) }
+          : contentKey === 'coach'
+            ? {
+                journey: defaultCoachJourney,
+                qualifications: defaultCoachQualifications,
+                ...(block?.content ?? {}),
+              }
+            : (block?.content ?? (contentKey === 'hero' ? starterHero : {}));
     setDraft(isRecord(nextDraft) ? nextDraft : {});
     setRevisions([]);
   }, [blocks, contentKey, serviceIndex]);
 
   async function save(publish: boolean) {
+    if (contentKey === 'contacts') {
+      const invalid = Object.keys(defaultSocialLinks).find((key) => {
+        const value = draft[key];
+        return typeof value === 'string' && value.trim() && !safeSocialUrl(value.trim());
+      });
+      if (invalid) {
+        onError(
+          `${fieldLabels[invalid]} : indiquez une adresse HTTPS valide ou laissez le champ vide.`,
+        );
+        return;
+      }
+    }
     setBusy(true);
     try {
       let contentToSave: ContentRecord = draft;
@@ -912,7 +948,7 @@ export default function AdminContentPanel({
           <small>
             {serviceIndex === undefined
               ? 'Modifier les textes, les listes et les éléments affichés sur le site'
-              : 'Modifier les informations et les choix proposés pour cet accompagnement'}
+              : 'Modifier les informations affichées sur la carte de cet accompagnement'}
           </small>
         </span>
         <span className={`content-state ${selectedBlock?.publishedAt ? 'is-published' : ''}`}>

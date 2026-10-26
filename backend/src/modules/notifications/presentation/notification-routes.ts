@@ -40,7 +40,9 @@ export function createAdminNotificationRouter(
     '/retry',
     requireAdmin,
     asyncHandler(async (_request, response) => {
-      response.json({ dispatched: await service.retry() });
+      response
+        .status(410)
+        .json({ error: 'Les notifications des tunnels sont gérées dans Systeme.io.' });
     }),
   );
   return router;

@@ -2,13 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createAdminApi, requestJson } from '../../shared/api-client.js';
 import type { AdminFaq, ReviewAdmin, Submission } from './admin-types.js';
 
-export type AdminActivityNotification = {
-  id: string;
-  action: string;
-  entityId: string | null;
-  occurredAt: string;
-};
-
 export function useAdminWorkspace() {
   const [user, setUser] = useState(''),
     [sessionChecked, setSessionChecked] = useState(false),
@@ -17,11 +10,10 @@ export function useAdminWorkspace() {
     [loginPending, setLoginPending] = useState(false),
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
-    [tab, setTab] = useState('demandes'),
+    [tab, setTab] = useState('presentation'),
     [items, setItems] = useState<Submission[]>([]),
     [reviews, setReviews] = useState<ReviewAdmin[]>([]),
     [faqsData, setFaqsData] = useState<AdminFaq[]>([]),
-    [notificationEvents, setNotificationEvents] = useState<AdminActivityNotification[]>([]),
     [selected, setSelected] = useState<Submission | null>(null),
     [detailLoading, setDetailLoading] = useState(false),
     [health, setHealth] = useState<'checking' | 'ready' | 'error'>('checking'),
@@ -34,21 +26,6 @@ export function useAdminWorkspace() {
     [counts, setCounts] = useState({ NEW: 0, PENDING: 0 });
   const api = useMemo(() => createAdminApi(() => setUser('')), []);
   const loadSequence = useRef(0);
-  const loadNotificationEvents = useCallback(async () => {
-    try {
-      const result = await api<{
-        items: AdminActivityNotification[];
-        nextCursor: string | null;
-      }>('/api/admin/audit');
-      setNotificationEvents(
-        result.items.filter((event) =>
-          ['SUBMISSION_CREATED', 'REVIEW_SUBMITTED'].includes(event.action),
-        ),
-      );
-    } catch {
-      setNotificationEvents([]);
-    }
-  }, [api]);
   const checkHealth = useCallback(async () => {
     try {
       await requestJson('/api/health');
@@ -114,12 +91,6 @@ export function useAdminWorkspace() {
     const interval = window.setInterval(() => void load(), 30_000);
     return () => window.clearInterval(interval);
   }, [user, load]);
-  useEffect(() => {
-    if (!user) return;
-    void loadNotificationEvents();
-    const interval = window.setInterval(() => void loadNotificationEvents(), 30_000);
-    return () => window.clearInterval(interval);
-  }, [user, loadNotificationEvents]);
   async function login(e: React.FormEvent) {
     e.preventDefault();
     if (loginPending) return;
@@ -269,7 +240,6 @@ export function useAdminWorkspace() {
     items,
     reviews,
     faqsData,
-    notificationEvents,
     selected,
     setSelected,
     detailLoading,

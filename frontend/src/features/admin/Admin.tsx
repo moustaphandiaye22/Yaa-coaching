@@ -3,7 +3,6 @@ import {
   Activity,
   ArrowLeft,
   ArrowRight,
-  Bell,
   Check,
   CircleHelp,
   ExternalLink,
@@ -33,7 +32,7 @@ import AdminListToolbar from './AdminListToolbar.js';
 import { matchesAdminSearch } from './admin-list-utils.js';
 import { useAdminWorkspace } from './useAdminWorkspace.js';
 import type { Submission } from './admin-types.js';
-import AdminNotificationBell from '../../shared/components/AdminNotificationBell.js';
+import { funnelLinks } from '../../shared/funnel-links.js';
 
 type AdminProps = { onNavigate: (p: string) => void };
 const reviewStatusLabels: Record<string, string> = {
@@ -44,9 +43,8 @@ const reviewStatusLabels: Record<string, string> = {
 };
 const adminPages: Record<string, { title: string; description: string }> = {
   demandes: {
-    title: 'Demandes de contact',
-    description:
-      'Consultez les demandes, retrouvez les coordonnées et suivez chaque prise de contact.',
+    title: 'Anciennes demandes de contact',
+    description: 'Consultez les demandes enregistrées avant le passage aux formulaires Systeme.io.',
   },
   avis: {
     title: 'Avis et modération',
@@ -78,8 +76,8 @@ const adminPages: Record<string, { title: string; description: string }> = {
     description: 'Gérez la carte de l’accompagnement à domicile et de l’autonomie.',
   },
   questionnaires: {
-    title: 'Questionnaires',
-    description: 'Gérez les questions par étape et définissez lesquelles sont obligatoires.',
+    title: 'Formulaires des accompagnements',
+    description: 'Les formulaires actifs sont gérés dans Systeme.io, pour chaque accompagnement.',
   },
   informations: {
     title: 'Zones et coordonnées',
@@ -94,8 +92,8 @@ const adminPages: Record<string, { title: string; description: string }> = {
     description: 'Créez les comptes de l’équipe et gérez leurs rôles et leurs accès.',
   },
   notifications: {
-    title: 'Notifications e-mail',
-    description: 'Suivez les envois liés aux demandes et relancez ceux qui sont en échec.',
+    title: 'Notifications Systeme.io',
+    description: 'Les notifications des tunnels sont gérées dans votre compte Systeme.io.',
   },
 };
 
@@ -118,7 +116,6 @@ function Admin({ onNavigate }: AdminProps) {
     items,
     reviews,
     faqsData,
-    notificationEvents,
     selected,
     setSelected,
     detailLoading,
@@ -327,7 +324,7 @@ function Admin({ onNavigate }: AdminProps) {
             {
               title: 'ACTIVITÉ',
               items: [
-                { id: 'demandes', Icon: Inbox, label: 'Demandes', count: counts.NEW },
+                { id: 'demandes', Icon: Inbox, label: 'Anciennes demandes' },
                 { id: 'avis', Icon: Star, label: 'Avis', count: counts.PENDING },
                 { id: 'faq', Icon: CircleHelp, label: 'Questions fréquentes' },
               ],
@@ -340,7 +337,7 @@ function Admin({ onNavigate }: AdminProps) {
                 { id: 'coaching', Icon: Activity, label: 'YAA Coaching' },
                 { id: 'player', Icon: UserRound, label: 'YAA Player' },
                 { id: 'autonomie', Icon: HeartHandshake, label: 'YAA Autonomie' },
-                { id: 'questionnaires', Icon: ListChecks, label: 'Questionnaires' },
+                { id: 'questionnaires', Icon: ListChecks, label: 'Formulaires Systeme.io' },
                 { id: 'informations', Icon: MapPin, label: 'Zones & coordonnées' },
               ],
             },
@@ -351,9 +348,8 @@ function Admin({ onNavigate }: AdminProps) {
                 { id: 'comptes', Icon: UsersRound, label: 'Comptes' },
                 {
                   id: 'notifications',
-                  Icon: Bell,
-                  label: 'Notifications',
-                  count: counts.NEW + counts.PENDING,
+                  Icon: ExternalLink,
+                  label: 'Notifications Systeme.io',
                 },
               ],
             },
@@ -403,25 +399,6 @@ function Admin({ onNavigate }: AdminProps) {
             <p className="admin-page-description">{currentPage.description}</p>
           </div>
           <div className="admin-top-right">
-            <AdminNotificationBell
-              count={counts.NEW + counts.PENDING}
-              events={notificationEvents}
-              onSelectEvent={(event) => {
-                setError('');
-                setNotice('');
-                if (event.action === 'SUBMISSION_CREATED' && event.entityId) {
-                  setTab('demandes');
-                  onNavigate(`/admin/demandes/${encodeURIComponent(event.entityId)}`);
-                } else {
-                  setTab('avis');
-                  if (submissionRouteId) onNavigate('/admin');
-                }
-              }}
-              onViewAll={() => {
-                setTab('notifications');
-                if (submissionRouteId) onNavigate('/admin');
-              }}
-            />
             <span className={`api-status api-${health}`} aria-live="polite">
               <i />
               {health === 'checking'
@@ -728,15 +705,9 @@ function Admin({ onNavigate }: AdminProps) {
               )}
             </>
           )}
-          {[
-            'presentation',
-            'approche',
-            'coaching',
-            'player',
-            'autonomie',
-            'informations',
-            'questionnaires',
-          ].includes(tab) && (
+          {['presentation', 'approche', 'coaching', 'player', 'autonomie', 'informations'].includes(
+            tab,
+          ) && (
             <div className="admin-content-group-grid">
               {(tab === 'presentation'
                 ? [{ contentKey: 'hero' }, { contentKey: 'closing' }]
@@ -748,9 +719,7 @@ function Admin({ onNavigate }: AdminProps) {
                       ? [{ contentKey: 'player' }, { contentKey: 'services', serviceIndex: 1 }]
                       : tab === 'autonomie'
                         ? [{ contentKey: 'services', serviceIndex: 2 }]
-                        : tab === 'informations'
-                          ? [{ contentKey: 'zones' }, { contentKey: 'contacts' }]
-                          : [{ contentKey: 'questionnaires' }]
+                        : [{ contentKey: 'zones' }, { contentKey: 'contacts' }]
               ).map(({ contentKey, serviceIndex }) => (
                 <AdminContentPanel
                   key={`${contentKey}-${serviceIndex ?? 'page'}`}
@@ -763,12 +732,62 @@ function Admin({ onNavigate }: AdminProps) {
               ))}
             </div>
           )}
+          {tab === 'questionnaires' && (
+            <div className="admin-content-card admin-funnel-links">
+              <h2>Formulaires actifs</h2>
+              <p>
+                Chaque accompagnement mène à son propre formulaire Systeme.io. Ces liens ouvrent les
+                formulaires visibles par les visiteurs ; modifiez leurs questions depuis votre
+                tableau de bord Systeme.io.
+              </p>
+              <p>
+                Les changements effectués sur une page du tunnel sont visibles en ouvrant le même
+                lien. Si vous changez son adresse, il faudra aussi modifier le lien dans le site.
+                Les textes des pages YAA COACHING restent gérés dans cette administration.
+              </p>
+              <div className="admin-funnel-links-list">
+                {[
+                  { label: 'YAA COACHING', href: funnelLinks.coaching },
+                  { label: 'YAA PLAYER', href: funnelLinks.player },
+                  { label: 'YAA AUTONOMIE', href: funnelLinks.autonomie },
+                ].map(({ label, href }) => (
+                  <a
+                    className="button button-light"
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    key={label}
+                  >
+                    {label} <ExternalLink size={15} aria-hidden="true" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
           {tab === 'medias' && (
             <AdminMediaPanel api={api} onError={setError} onSuccess={setNotice} />
           )}
-          {['comptes', 'notifications'].includes(tab) && (
+          {tab === 'notifications' && (
+            <div className="admin-content-card admin-funnel-links">
+              <h2>Notifications des tunnels</h2>
+              <p>
+                Les demandes, les règles d’automatisation et leurs notifications sont gérées dans
+                Systeme.io. L’application ne reçoit pas ces notifications et ne les affiche pas dans
+                son compteur.
+              </p>
+              <a
+                className="button button-light"
+                href="https://systeme.io/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Ouvrir Systeme.io <ExternalLink size={15} aria-hidden="true" />
+              </a>
+            </div>
+          )}
+          {tab === 'comptes' && (
             <AdminOperationsPanel
-              section={tab as 'comptes' | 'notifications'}
+              section="comptes"
               api={api}
               onError={setError}
               onSuccess={setNotice}

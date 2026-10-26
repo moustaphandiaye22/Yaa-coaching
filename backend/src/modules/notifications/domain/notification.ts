@@ -6,10 +6,6 @@ export type NotificationListFilter = {
   matchingKinds?: NotificationKind[];
 };
 
-export interface NotificationDispatcher {
-  dispatchPending(limit?: number): Promise<number>;
-}
-
 export interface NotificationRepository {
   list(
     page: number,
