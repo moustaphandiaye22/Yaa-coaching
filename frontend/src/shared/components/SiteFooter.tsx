@@ -13,7 +13,7 @@ const socialLinks: { label: string; key: SocialLinkKey; Icon: typeof Instagram }
 
 export default function SiteFooter() {
   const contact = usePublicContact();
-  const { email, phone, phoneLink, footerCoaching, footerPlayer, footerSignature } = contact;
+  const { email, phone, phoneLink, footerCoaching, footerPlayer } = contact;
 
   return (
     <footer className="site-footer">
@@ -60,7 +60,6 @@ export default function SiteFooter() {
       </div>
       <div className="footer-bottom">
         <span>© {new Date().getFullYear()} YAA COACHING</span>
-        {footerSignature && <span>{footerSignature}</span>}
       </div>
     </footer>
   );

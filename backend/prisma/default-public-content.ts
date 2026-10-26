@@ -7,7 +7,6 @@ export const publicContentDefaults = [
       phoneLink: '+33652281155',
       footerCoaching: 'Coaching & autonomie : Vierzon et alentours.',
       footerPlayer: 'Player : sans limite géographique.',
-      footerSignature: 'FAIT AVEC ÉCOUTE · À VIERZON',
       instagramUrl: 'https://www.instagram.com/yaa_coaching_by_yakhouba/',
       tiktokUrl: 'https://www.tiktok.com/@yaacoaching29',
       facebookUrl: 'https://www.facebook.com/p/Yaa-Coaching-by-Yakhouba-100063732535020/',

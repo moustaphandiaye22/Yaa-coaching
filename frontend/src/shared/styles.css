@@ -10927,9 +10927,10 @@ textarea {
 .footer-social-links a {
   flex: 1 0 0;
   justify-content: center;
-  white-space: nowrap;
+  white-space: normal;
   min-height: 42px;
-  min-width: 116px;
+  min-width: 0;
+  text-align: center;
   padding: 8px 12px;
   background: rgb(255 255 255 / 4%);
 }
@@ -10977,7 +10978,25 @@ textarea {
   }
 
   .footer-social-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+    gap: 8px;
+    padding: 4px 0;
+  }
+
+  .footer-social-links a {
     justify-content: flex-start;
+    min-height: 44px;
+    padding: 8px 10px;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 360px) {
+  .footer-social-links {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

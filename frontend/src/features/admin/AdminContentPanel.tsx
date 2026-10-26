@@ -109,7 +109,6 @@ const fieldLabels: Record<string, string> = {
   phoneLink: 'Lien téléphonique',
   footerCoaching: 'Texte du pied de page · Coaching',
   footerPlayer: 'Texte du pied de page · Player',
-  footerSignature: 'Signature du pied de page',
   instagramUrl: 'Compte Instagram',
   tiktokUrl: 'Compte TikTok',
   facebookUrl: 'Compte Facebook',
