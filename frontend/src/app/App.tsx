@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import Admin from '../features/admin/Admin.js';
 import PublicSite from '../features/landing/PublicSite.js';
-import { funnelLinks } from '../shared/funnel-links.js';
 
 const PUBLIC_ROUTES = [
   '/',
   '/accompagnements',
+  '/player',
   '/methode',
   '/coach',
   '/galerie',
@@ -37,7 +37,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (route === '/questionnaire') window.location.replace(funnelLinks.offers);
+    if (route === '/questionnaire') window.location.replace('/accompagnements');
   }, [route]);
 
   function navigate(path: string) {

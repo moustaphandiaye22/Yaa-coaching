@@ -1,6 +1,5 @@
 import { ArrowUpRight, Facebook, Instagram, Linkedin, MessageCircle, Music2 } from 'lucide-react';
 import { usePublicContact } from '../use-public-contact.js';
-import { funnelLinks } from '../funnel-links.js';
 import { safeSocialUrl, type SocialLinkKey } from '../social-links.js';
 
 const socialLinks: { label: string; key: SocialLinkKey; Icon: typeof Instagram }[] = [
@@ -52,9 +51,9 @@ export default function SiteFooter() {
               </a>
             ) : null;
           })}
-          <a href={funnelLinks.offers} target="_blank" rel="noreferrer" aria-label="Offres et bilans Systeme.io">
+          <a href="/accompagnements" aria-label="Découvrir les accompagnements">
             <ArrowUpRight size={17} strokeWidth={1.8} aria-hidden="true" />
-            <span>Offres et bilans Systeme.io</span>
+            <span>Nos accompagnements</span>
           </a>
         </nav>
       </div>

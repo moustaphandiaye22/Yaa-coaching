@@ -19,6 +19,7 @@ import { mediaUrl } from '../../shared/site-content.js';
 import { funnelLinks } from '../../shared/funnel-links.js';
 import { defaultSocialLinks, safeSocialUrl } from '../../shared/social-links.js';
 import { defaultCoachJourney, defaultCoachQualifications } from '../../shared/coach-journey.js';
+import { defaultPlayerProgram } from '../../shared/player-program.js';
 import AdminListToolbar from './AdminListToolbar.js';
 import { matchesAdminSearch } from './admin-list-utils.js';
 
@@ -68,7 +69,6 @@ const contentBlockLabels: Record<string, string> = {
   method: 'Méthode',
   pillars: 'Axes de travail',
   steps: 'Étapes',
-  experiences: 'Expériences',
   journey: 'Parcours de terrain',
   qualifications: 'Qualifications et parcours football',
   photo: 'Photo',
@@ -146,6 +146,10 @@ const fieldLabels: Record<string, string> = {
   pillars: 'Axes de travail',
   experiences: 'Expériences',
   questionnaireSituations: 'Situations proposées',
+  programmeDescription: 'Présentation YAA PLAYER',
+  offers: 'Offres et tarifs',
+  inspirationDescription: 'Présentation Instant inspiration',
+  parentsDescription: 'Présentation Parents',
 };
 
 function isRecord(value: unknown): value is ContentRecord {
@@ -816,6 +820,8 @@ export default function AdminContentPanel({
       : (contentBlockLabels[contentKey] ?? 'Page du site');
   const visibleDraftEntries = Object.entries(draft).filter(([key, value]) => {
     if (contentKey === 'player' && key === 'questionnaireSituation') return false;
+    if (contentKey === 'coach' && key === 'experiences') return false;
+    if (contentKey === 'zones' && key === 'items') return false;
     if (
       contentKey === 'services' &&
       serviceIndex !== undefined &&
@@ -847,13 +853,15 @@ export default function AdminContentPanel({
         ? storedServices[serviceIndex]
         : contentKey === 'contacts'
           ? { ...defaultSocialLinks, ...(block?.content ?? {}) }
-          : contentKey === 'coach'
-            ? {
-                journey: defaultCoachJourney,
-                qualifications: defaultCoachQualifications,
-                ...(block?.content ?? {}),
-              }
-            : (block?.content ?? (contentKey === 'hero' ? starterHero : {}));
+          : contentKey === 'player'
+            ? { ...defaultPlayerProgram, ...(block?.content ?? {}) }
+            : contentKey === 'coach'
+              ? {
+                  journey: defaultCoachJourney,
+                  qualifications: defaultCoachQualifications,
+                  ...(block?.content ?? {}),
+                }
+              : (block?.content ?? (contentKey === 'hero' ? starterHero : {}));
     setDraft(isRecord(nextDraft) ? nextDraft : {});
     setRevisions([]);
   }, [blocks, contentKey, serviceIndex]);
@@ -960,6 +968,12 @@ export default function AdminContentPanel({
       </summary>
       <div className="admin-content-body">
         <div className="admin-content-editor">
+          {contentKey === 'zones' && (
+            <p className="admin-content-note">
+              Les zones sont indiquées sur chaque carte d’accompagnement. Cette rubrique présente le
+              contact et la carte de localisation.
+            </p>
+          )}
           <AdminListToolbar
             searchLabel="Rechercher un champ"
             searchPlaceholder="Nom du champ ou texte enregistré…"
@@ -1015,11 +1029,15 @@ export default function AdminContentPanel({
                     disabled={busy}
                     questionnaireEditor={contentKey === 'questionnaires'}
                     funnelHref={
-                      contentKey === 'player'
-                        ? funnelLinks.player
-                        : contentKey === 'coach' || contentKey === 'methode'
-                          ? funnelLinks.coaching
-                          : funnelLinks.offers
+                      serviceIndex !== undefined
+                        ? ([funnelLinks.coaching, funnelLinks.player, funnelLinks.autonomie][
+                            serviceIndex
+                          ] ?? '/accompagnements')
+                        : contentKey === 'player'
+                          ? funnelLinks.player
+                          : contentKey === 'coach' || contentKey === 'methode'
+                            ? funnelLinks.coaching
+                            : '/accompagnements'
                     }
                     onUploadingChange={(uploading) =>
                       setPendingUploads((count) => Math.max(0, count + (uploading ? 1 : -1)))

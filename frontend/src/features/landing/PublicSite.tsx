@@ -17,6 +17,7 @@ import GallerySection from '../gallery/GallerySection.js';
 import ReviewsSection from '../reviews/ReviewsSection.js';
 import FaqSection from '../faq/FaqSection.js';
 import PlayerCoachSection from './PlayerCoachSection.js';
+import PlayerProgramSection from './PlayerProgramSection.js';
 import { mediaUrl } from '../../shared/site-content.js';
 import { funnelLinkForService, funnelLinks } from '../../shared/funnel-links.js';
 import { usePublicSiteContent } from './usePublicSiteContent.js';
@@ -48,6 +49,7 @@ function PublicSite({
   const pageTitles: Record<string, string> = {
     home: 'Accueil',
     accompagnements: 'Nos accompagnements',
+    player: 'YAA PLAYER · Jeunes sportifs',
     methode: 'Notre méthode',
     coach: 'Votre coach',
     galerie: 'Photos & vidéos',
@@ -95,33 +97,34 @@ function PublicSite({
         onNavigate={onNavigate}
       />
       <main id="top" className={`public-page public-page-${page}`}>
-        {show('home', 'accompagnements', 'methode', 'coach') && contentStatus !== 'ready' && (
-          <section className="content-state section-pad" role="status" aria-live="polite">
-            <div className="content-state-card">
-              <span className="content-state-icon">
-                <RefreshCw size={22} />
-              </span>
-              <div>
-                <p className="eyebrow">CONTENU DU SITE</p>
-                <h1>
-                  {contentStatus === 'loading'
-                    ? 'Nous préparons cette page.'
-                    : 'Contenu momentanément indisponible.'}
-                </h1>
-                <p>
-                  {contentStatus === 'loading'
-                    ? 'Les informations sont en cours de chargement.'
-                    : 'La connexion aux informations du site a échoué. Vous pouvez réessayer dans un instant.'}
-                </p>
-                {contentStatus === 'error' && (
-                  <button className="button button-dark" type="button" onClick={reloadContent}>
-                    Réessayer <RefreshCw size={16} />
-                  </button>
-                )}
+        {show('home', 'accompagnements', 'methode', 'coach', 'player') &&
+          contentStatus !== 'ready' && (
+            <section className="content-state section-pad" role="status" aria-live="polite">
+              <div className="content-state-card">
+                <span className="content-state-icon">
+                  <RefreshCw size={22} />
+                </span>
+                <div>
+                  <p className="eyebrow">CONTENU DU SITE</p>
+                  <h1>
+                    {contentStatus === 'loading'
+                      ? 'Nous préparons cette page.'
+                      : 'Contenu momentanément indisponible.'}
+                  </h1>
+                  <p>
+                    {contentStatus === 'loading'
+                      ? 'Les informations sont en cours de chargement.'
+                      : 'La connexion aux informations du site a échoué. Vous pouvez réessayer dans un instant.'}
+                  </p>
+                  {contentStatus === 'error' && (
+                    <button className="button button-dark" type="button" onClick={reloadContent}>
+                      Réessayer <RefreshCw size={16} />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          )}
         {show('home') && contentStatus === 'ready' && !heroAvailable && (
           <section className="content-state section-pad" role="status">
             <div className="content-state-card">
@@ -153,7 +156,7 @@ function PublicSite({
               <p className="hero-lead">{heroValue('description')}</p>
               <p className="hero-loc">{heroValue('location')}</p>
               <div className="hero-actions">
-                <a className="button button-dark" href={funnelLinks.offers}>
+                <a className="button button-dark" href="/accompagnements">
                   {heroValue('buttonLabel')} <ArrowUpRight size={16} />
                 </a>
                 <span className="hero-caption">
@@ -165,7 +168,7 @@ function PublicSite({
                   <span>Reprendre une activité</span> <ArrowUpRight size={14} />
                 </a>
                 <a href={funnelLinks.player}>
-                  <span>Progresser au football</span> <ArrowUpRight size={14} />
+                  <span>Progresser dans son sport</span> <ArrowUpRight size={14} />
                 </a>
                 <a href={funnelLinks.autonomie}>
                   <span>Préserver l’autonomie</span> <ArrowUpRight size={14} />
@@ -240,9 +243,10 @@ function PublicSite({
             <div className="service-grid">
               {serviceContent.map((s, i) => {
                 const photo = mediaFor(s.name);
-                const serviceImage = s.image && (s.image.startsWith('/') || /^https?:\/\//i.test(s.image))
-                  ? s.image
-                  : '';
+                const serviceImage =
+                  s.image && (s.image.startsWith('/') || /^https?:\/\//i.test(s.image))
+                    ? s.image
+                    : '';
                 return (
                   <article key={s.name} id={s.slug} className={`service-card ${s.accent}`}>
                     <div className="service-image-wrap">
@@ -285,9 +289,7 @@ function PublicSite({
                       )}
                       <div className="service-foot">
                         <span>{s.zone}</span>
-                        <a href={funnelLinkForService(s.slug)}>
-                          {s.link}
-                        </a>
+                        <a href={funnelLinkForService(s.slug)}>{s.link}</a>
                       </div>
                     </div>
                   </article>
@@ -327,47 +329,8 @@ function PublicSite({
             </div>
           </section>
         )}
-        {show('accompagnements') && contentStatus === 'ready' && (
-          <section className="player-feature section-pad">
-            <div className="player-visual">
-              {mediaFor('YAA PLAYER') ? (
-                <img
-                  src={mediaUrl(mediaFor('YAA PLAYER')!.url)}
-                  alt={mediaFor('YAA PLAYER')!.alt}
-                  loading="lazy"
-                />
-              ) : (
-                <div
-                  className="editorial-image-placeholder player-placeholder"
-                  aria-hidden="true"
-                />
-              )}
-              <div className="player-label">
-                <span>{String(playerContent.serviceLabel ?? 'YAA PLAYER')}</span>
-                <small>{String(playerContent.mediaLabel ?? '')}</small>
-              </div>
-              <div className="player-number">02</div>
-            </div>
-            <div className="player-copy">
-              <p className="eyebrow">
-                <span className="eyebrow-dot ochre-dot" /> {String(playerContent.eyebrow ?? '')}
-              </p>
-              <h2 className="copy-preserve-lines">{String(playerContent.title ?? '')}</h2>
-              <p>{String(playerContent.description ?? '')}</p>
-              <p>{String(playerContent.audience ?? '')}</p>
-              <div className="player-tags">
-                {Array.isArray(playerContent.tags) &&
-                  playerContent.tags.map((tag) => <span key={String(tag)}>{String(tag)}</span>)}
-              </div>
-              <a
-                className="text-link"
-                href={funnelLinks.player}
-              >
-                {String(playerContent.callToAction ?? '')} <ArrowUpRight size={16} />
-              </a>
-              <small className="small-note">{String(playerContent.note ?? '')}</small>
-            </div>
-          </section>
+        {show('player') && contentStatus === 'ready' && (
+          <PlayerProgramSection content={playerContent} />
         )}
         {show('methode') && contentStatus === 'ready' && (
           <section className="method-section section-pad" id="methode">
@@ -410,7 +373,8 @@ function PublicSite({
                 <br />
                 <em>{String(zonesContent.accent ?? '')}</em>
               </h2>
-              <p>{String(zonesContent.introduction ?? '')}</p>
+              {typeof zonesContent.introduction === 'string' &&
+                zonesContent.introduction.trim() && <p>{zonesContent.introduction}</p>}
               {zonesContactEmail && (
                 <a className="text-link" href={`mailto:${zonesContactEmail}`}>
                   {String(zonesContent.contactLabel ?? '')} <ArrowUpRight size={15} />
@@ -418,23 +382,9 @@ function PublicSite({
               )}
             </div>
             <div className="zones-list">
-              {Array.isArray(zonesContent.items) &&
-                zonesContent.items.map((item, index) => {
-                  const zone = item as { title?: string; description?: string };
-                  return (
-                    <article key={zone.title ?? index}>
-                      <span>{String(index + 1).padStart(2, '0')}</span>
-                      <div>
-                        <h3>{zone.title}</h3>
-                        <p>{zone.description}</p>
-                      </div>
-                      <ArrowUpRight size={16} />
-                    </article>
-                  );
-                })}
               <div className="service-area-map">
                 <div className="service-area-map-heading">
-                  <b>Zone d’intervention autour de Vierzon</b>
+                  <b>Carte indicative du secteur</b>
                   <a
                     href="https://www.openstreetmap.org/?mlat=47.221&mlon=2.069#map=13/47.221/2.069"
                     target="_blank"
@@ -455,13 +405,7 @@ function PublicSite({
         {show('galerie') && <GallerySection />}
         {show('avis') && <ReviewsSection onNotice={notify} />}
         {show('avis') && <FaqSection />}
-        {show(
-          'home',
-          'accompagnements',
-          'methode',
-          'galerie',
-          'avis',
-        ) && (
+        {show('accompagnements', 'methode', 'galerie', 'avis') && (
           <section className="closing-cta" aria-labelledby="public-closing-title">
             <p className="eyebrow">{closingValue('eyebrow', 'UN PREMIER ÉCHANGE')}</p>
             <h2 className="copy-preserve-lines" id="public-closing-title">
@@ -469,10 +413,7 @@ function PublicSite({
               <br />
               <em>{closingValue('accent', 'commence ici.')}</em>
             </h2>
-            <a
-              className="button button-cream"
-              href={funnelLinks.offers}
-            >
+            <a className="button button-cream" href="/accompagnements">
               {closingValue('buttonLabel', 'Faire le premier pas')} <ArrowUpRight size={16} />
             </a>
             <span className="closing-star" aria-hidden="true">

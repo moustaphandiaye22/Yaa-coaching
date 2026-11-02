@@ -65,7 +65,7 @@ const adminPages: Record<string, { title: string; description: string }> = {
   },
   player: {
     title: 'YAA Player',
-    description: 'Gérez la présentation et la carte du service dédié aux jeunes footballeurs.',
+    description: 'Gérez la présentation et la carte du service dédié aux jeunes sportifs.',
   },
   coaching: {
     title: 'YAA Coaching',
@@ -736,9 +736,9 @@ function Admin({ onNavigate }: AdminProps) {
             <div className="admin-content-card admin-funnel-links">
               <h2>Formulaires actifs</h2>
               <p>
-                Chaque accompagnement mène à son propre formulaire Systeme.io. Ces liens ouvrent les
-                formulaires visibles par les visiteurs ; modifiez leurs questions depuis votre
-                tableau de bord Systeme.io.
+                Chaque accompagnement mène à son tunnel Systeme.io dédié, qui présente le service et
+                donne accès au formulaire de bilan. Modifiez les questions et les étapes du tunnel
+                depuis votre tableau de bord Systeme.io.
               </p>
               <p>
                 Les changements effectués sur une page du tunnel sont visibles en ouvrant le même

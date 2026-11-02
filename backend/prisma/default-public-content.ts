@@ -79,17 +79,17 @@ export const publicContentDefaults = [
     key: 'player',
     content: {
       serviceLabel: 'YAA PLAYER',
-      mediaLabel: 'SANS LIMITE GÉOGRAPHIQUE',
-      eyebrow: 'POUR LES JEUNES FOOTBALLEURS',
-      title: 'Franchir un cap\ncommence par mieux\nse connaître.',
+      mediaLabel: 'TOUTES DISCIPLINES · 9–18 ANS',
+      eyebrow: 'POUR LES JEUNES SPORTIFS',
+      title: 'Optimiser sa performance mentale.',
       description:
-        'Faire grandir tes points forts. Avancer sur ce qui te freine. Jouer avec plus de confiance, sans perdre le plaisir.',
+        'YAA PLAYER accompagne les jeunes sportifs de 9 à 18 ans, dans toutes les disciplines, pour optimiser leur performance mentale dans sa globalité : confiance, émotions, concentration, motivation, gestion de la pression et fixation d’objectifs.',
       audience:
-        'Jeune joueur ou parent, commençons par un échange sur le parcours, les envies et les besoins du joueur.',
-      tags: ['PHYSIQUE', 'MENTAL', 'TECHNIQUE', 'TACTIQUE'],
-      questionnaireSituation: 'Être accompagné dans mon parcours de jeune footballeur',
-      callToAction: 'Découvrir ce qui peut faire la différence',
-      note: 'Sans limite géographique. Distanciel et présentiel : modalités précisées ensemble.',
+        'Le parcours tient aussi compte du sommeil, de la récupération, de l’alimentation, des routines, des études et de l’équilibre de vie. Présentiel ou distance, en français ou en anglais.',
+      tags: ['MENTAL', 'ENTRAÎNEMENT INVISIBLE', 'ÉTUDES', 'ÉQUILIBRE DE VIE', 'AUTONOMIE'],
+      questionnaireSituation: 'Être accompagné dans mon parcours de jeune sportif',
+      callToAction: 'Faire mon bilan gratuit',
+      note: 'Une séance individuelle d’une heure par semaine · 3 mois minimum.',
     },
   },
   {
@@ -138,23 +138,6 @@ export const publicContentDefaults = [
         'Expérience dans la détection et l’accompagnement de jeunes talents',
       ],
       callToAction: 'Faisons connaissance',
-      experiences: [
-        {
-          label: 'SPORT & PERFORMANCE',
-          title: 'UEFA A',
-          description: 'Préparation mentale et athlétique · Plus de 20 ans d’expérience',
-        },
-        {
-          label: 'ACCOMPAGNEMENT & ÉCOUTE',
-          title: 'Près de 10 ans',
-          description: 'Expérience de coach en structure de santé mentale',
-        },
-        {
-          label: 'ENGAGEMENT HUMAIN',
-          title: '10 ans',
-          description: 'Pompier volontaire · Association 2 Bouts',
-        },
-      ],
     },
   },
   {
@@ -163,26 +146,9 @@ export const publicContentDefaults = [
       eyebrow: 'NOS ZONES D’ACCOMPAGNEMENT',
       title: 'À Vierzon,',
       accent: 'à vos côtés.',
-      introduction: 'YAA PLAYER, où que vous soyez.',
+      introduction: '',
       contactEmail: 'yanmane29@gmail.com',
       contactLabel: 'Une question ? Écrivez-moi',
-      items: [
-        {
-          title: 'YAA COACHING',
-          description:
-            'Un accompagnement physique et mental à Vierzon et alentours : reprise d’activité, émotions, concentration, mémoire, confiance et fixation d’objectifs.',
-        },
-        {
-          title: 'YAA AUTONOMIE',
-          description:
-            'À domicile, pour stimuler, rassurer et garder le lien. La zone précise et les déplacements sont convenus lors du premier échange.',
-        },
-        {
-          title: 'YAA PLAYER',
-          description:
-            'Sans limite géographique. Suivi en distanciel ou en présentiel : lieux et modalités sont définis ensemble.',
-        },
-      ],
     },
   },
 ] as const;

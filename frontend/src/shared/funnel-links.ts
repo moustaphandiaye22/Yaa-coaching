@@ -1,5 +1,4 @@
 export const funnelLinks = {
-  offers: 'https://yanmane29.systeme.io/2de320c2',
   coaching: 'https://yanmane29.systeme.io/7a84d4ba',
   player: 'https://yanmane29.systeme.io/bilan-yaa-player',
   autonomie: 'https://yanmane29.systeme.io/5b366a13',
@@ -15,6 +14,6 @@ export function funnelLinkForService(slug: string) {
     case 'autonomie':
       return funnelLinks.autonomie;
     default:
-      return funnelLinks.offers;
+      return '/accompagnements';
   }
 }

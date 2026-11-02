@@ -2,7 +2,6 @@ import { ArrowUpRight } from 'lucide-react';
 import type { Submission } from './admin-types.js';
 import AdminListToolbar from './AdminListToolbar.js';
 import AdminPagination from './AdminPagination.js';
-import { funnelLinks } from '../../shared/funnel-links.js';
 
 type Props = {
   counts: { NEW: number; PENDING: number };
@@ -43,7 +42,7 @@ export default function AdminSubmissionsPanel({
       <p className="admin-content-empty">
         Cette liste contient les demandes enregistrées dans l’application. Les réponses aux
         formulaires actuels sont à consulter dans{' '}
-        <a href={funnelLinks.offers} target="_blank" rel="noreferrer">
+        <a href="https://systeme.io/" target="_blank" rel="noreferrer">
           Systeme.io
         </a>
         .

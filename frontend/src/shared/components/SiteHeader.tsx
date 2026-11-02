@@ -29,6 +29,7 @@ type Props = {
 const links = [
   { path: '/', label: 'Accueil', Icon: House },
   { path: '/accompagnements', label: 'Accompagnements', Icon: Activity },
+  { path: '/player', label: 'YAA PLAYER', Icon: Activity },
   { path: '/methode', label: 'La méthode', Icon: Route },
   { path: '/coach', label: 'Votre coach', Icon: UserRound },
   { path: '/galerie', label: 'Photos & vidéos', Icon: Images },

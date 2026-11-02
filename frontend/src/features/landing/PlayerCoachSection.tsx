@@ -15,7 +15,6 @@ import { mediaUrl } from '../../shared/site-content.js';
 import { defaultCoachJourney, defaultCoachQualifications } from '../../shared/coach-journey.js';
 
 type CoachContent = Record<string, unknown>;
-type Experience = { label?: string; title?: string; description?: string };
 type JourneyItem = { title?: string; description?: string };
 
 function stringValue(value: unknown): string {
@@ -26,15 +25,8 @@ export default function PlayerCoachSection({ content }: { content: CoachContent 
   const paragraphs = Array.isArray(content.paragraphs)
     ? content.paragraphs.map(stringValue).filter(Boolean)
     : [];
-  const experiences = Array.isArray(content.experiences)
-    ? content.experiences.filter(
-        (item): item is Experience =>
-          item !== null && typeof item === 'object' && !Array.isArray(item),
-      )
-    : [];
   const photo = stringValue(content.photo);
   const role = stringValue(content.title).replace(/^Yakhouba\s+Mane\s*[—–-]\s*/i, '');
-  const icons = [Target, Brain, Heart];
   const journey: JourneyItem[] = Array.isArray(content.journey)
     ? content.journey.filter(
         (item): item is JourneyItem =>
@@ -102,34 +94,6 @@ export default function PlayerCoachSection({ content }: { content: CoachContent 
               );
             })}
           </div>
-        </div>
-      )}
-      {experiences.length > 0 && (
-        <div className="player-coach-qualifications">
-          <h2>REPÈRES DU PARCOURS</h2>
-          <ul>
-            {experiences.map((experience, index) => {
-              const Icon = icons[index % icons.length];
-              return (
-                <li key={index}>
-                  <span className="player-coach-qualification-icon" aria-hidden="true">
-                    <Icon size={18} strokeWidth={1.7} />
-                  </span>
-                  <span>
-                    {stringValue(experience.label) && (
-                      <strong>{stringValue(experience.label)} · </strong>
-                    )}
-                    {stringValue(experience.title) && (
-                      <strong>{stringValue(experience.title)}</strong>
-                    )}
-                    {stringValue(experience.description) && (
-                      <span> {stringValue(experience.description)}</span>
-                    )}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
         </div>
       )}
       {qualifications.length > 0 && (

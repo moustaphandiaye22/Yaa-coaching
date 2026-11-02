@@ -14,11 +14,6 @@ export const defaultCoachJourney = [
     description:
       'Je porte également un engagement de solidarité, de partage et de respect de chacun. Ces valeurs nourrissent ma façon de cheminer aux côtés des personnes.',
   },
-  {
-    title: 'Avec YAA COACHING',
-    description:
-      'Je propose aux particuliers un accompagnement personnalisé pour se remettre en mouvement, développer leurs ressources et avancer vers leurs propres objectifs. L’objectif est de retrouver des possibilités d’action à votre rythme, sans mesurer votre valeur à vos performances.',
-  },
 ];
 
 export const defaultCoachQualifications = [

@@ -26,20 +26,19 @@ export const services = [
     name: 'YAA PLAYER',
     accent: 'ochre',
     image: '/images/player.webp',
-    alt: 'Un jeune footballeur échange avec un coach à son écoute au bord du terrain.',
+    alt: 'Un jeune sportif échange avec un coach à son écoute après une séance.',
     link: 'Découvrir YAA PLAYER →',
-    questionnaireSituations: ['Être accompagné dans mon parcours de jeune footballeur'],
-    type: 'JEUNE FOOTBALLEUR',
+    questionnaireSituations: ['Être accompagné dans mon parcours de jeune sportif'],
+    type: 'JEUNES SPORTIFS · 9–18 ANS',
     title: 'YAA PLAYER',
     zone: 'Sans limite géographique',
     presentation:
-      'Accompagnement individualisé du jeune footballeur de 9 à 18 ans. Technique, tactique, physique, mental et bien-être : les priorités sont définies avec le joueur.',
-    offerHighlight:
-      'CIBLÉ : 12 semaines, 390 € ; ÉVOLUTION : 16 semaines, 520 € ; OPTIMISATION : 20 semaines, 650 €',
+      'Accompagnement individualisé des jeunes sportifs de 9 à 18 ans, toutes disciplines. Le parcours travaille la performance mentale, les habitudes de progression et l’autonomie, en lien avec la discipline et le projet du jeune.',
+    offerHighlight: 'CIBLÉ : 45 € / séance · PERFORMANCE : 60 € / séance',
     offerDetails:
-      '. CIBLÉ payable en 1 × 390 €, 2 × 195 € ou 3 × 130 €. Un bilan permet de décider de la suite.',
+      ' Séances individuelles d’une heure, une fois par semaine, sur 3 mois minimum. Le parcours est proposé après le bilan découverte.',
     description:
-      'Tu veux franchir un cap, gagner en confiance et mieux exprimer tes qualités sur le terrain ? Un accompagnement individuel pour avancer avec un cap qui te ressemble.',
+      'Pour les jeunes sportifs de 9 à 18 ans, toutes disciplines : optimiser la performance mentale, les habitudes de progression et l’autonomie, sans réduire le jeune à ses résultats.',
   },
   {
     slug: 'autonomie',
