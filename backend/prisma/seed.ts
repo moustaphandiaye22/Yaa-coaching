@@ -17,17 +17,17 @@ const defaultFaqs = [
   {
     question: 'Comment se déroule le début du parcours ?',
     answer:
-      'Le parcours commence par un entretien découverte. Il permet de faire le point, puis de définir ensemble les priorités, le format et les modalités de l’accompagnement.',
+      'Le parcours commence par un questionnaire découverte, puis un entretien gratuit et sans engagement. Nous définissons ensuite ensemble les priorités, le format et les modalités de l’accompagnement.',
   },
   {
     question: 'Où et sous quel format peut-on être accompagné ?',
     answer:
-      'YAA COACHING et YAA AUTONOMIE interviennent à Vierzon et alentours. YAA PLAYER s’adresse aux jeunes footballeurs sans limite géographique : le suivi à distance et l’accompagnement en présentiel correspondent à des modalités distinctes, à préciser lors de l’entretien découverte.',
+      'YAA COACHING est proposé à Vierzon et alentours, à distance ou en combinant les deux. YAA AUTONOMIE se déroule à domicile à Vierzon et alentours. YAA PLAYER accompagne les jeunes sportifs de toutes disciplines, sans limite géographique. Les lieux et les modalités sont précisés lors de l’entretien découverte.',
   },
   {
     question: 'Comment connaître les tarifs ?',
     answer:
-      'Le tarif et le contenu sont présentés lors de l’entretien découverte, en fonction de l’accompagnement envisagé.',
+      'Les tarifs sont affichés pour chaque accompagnement : YAA COACHING à 55 € la séance, YAA PLAYER CIBLÉ à 45 € ou PERFORMANCE à 60 € la séance, et YAA AUTONOMIE à 45 € la séance d’une heure. Les modalités, les options et les éventuels frais de déplacement sont précisés avant tout engagement.',
   },
 ];
 
@@ -223,7 +223,7 @@ async function seedPublishedContent() {
     {
       key: 'hero',
       content: {
-        eyebrow: 'COACHING · FOOTBALL · AUTONOMIE',
+        eyebrow: 'COACHING · PLAYER · AUTONOMIE',
         title: 'Accompagnement physique & mental.',
         accent: 'À votre rythme.',
         description:

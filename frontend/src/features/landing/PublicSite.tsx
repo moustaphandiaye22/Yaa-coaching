@@ -18,7 +18,7 @@ import ReviewsSection from '../reviews/ReviewsSection.js';
 import FaqSection from '../faq/FaqSection.js';
 import PlayerCoachSection from './PlayerCoachSection.js';
 import PlayerProgramSection from './PlayerProgramSection.js';
-import { mediaUrl } from '../../shared/site-content.js';
+import { mediaUrl, playerMultisportImage } from '../../shared/site-content.js';
 import { funnelLinkForService, funnelLinks } from '../../shared/funnel-links.js';
 import { usePublicSiteContent } from './usePublicSiteContent.js';
 
@@ -244,7 +244,9 @@ function PublicSite({
               {serviceContent.map((s, i) => {
                 const photo = mediaFor(s.name);
                 const serviceImage =
-                  s.image && (s.image.startsWith('/') || /^https?:\/\//i.test(s.image))
+                  s.slug === 'player' && s.image === 'player.jpg'
+                    ? playerMultisportImage.url
+                    : s.image && (s.image.startsWith('/') || /^https?:\/\//i.test(s.image))
                     ? s.image
                     : '';
                 return (
@@ -253,7 +255,11 @@ function PublicSite({
                       {photo || serviceImage ? (
                         <img
                           src={mediaUrl(photo?.url ?? serviceImage)}
-                          alt={photo?.alt ?? s.alt}
+                          alt={
+                            photo?.url === '/images/player.webp'
+                              ? playerMultisportImage.alt
+                              : (photo?.alt ?? s.alt)
+                          }
                           loading="lazy"
                         />
                       ) : (
@@ -281,7 +287,7 @@ function PublicSite({
                           {s.offerHighlight && <strong>{s.offerHighlight}</strong>}
                           {s.offerDetails && (
                             <>
-                              {s.offerHighlight && !/^\s/.test(s.offerDetails) ? ' ' : ''}
+                              {s.offerHighlight ? ' ' : ''}
                               {s.offerDetails.trimStart()}
                             </>
                           )}

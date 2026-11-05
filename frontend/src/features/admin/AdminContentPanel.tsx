@@ -48,7 +48,7 @@ type Props = {
 };
 
 const starterHero = {
-  eyebrow: 'COACHING · FOOTBALL · AUTONOMIE',
+  eyebrow: 'COACHING · PLAYER · AUTONOMIE',
   title: 'Accompagnement physique & mental.',
   accent: 'À votre rythme.',
   description:
@@ -287,7 +287,7 @@ function ContentImageField({
   const [error, setError] = useState('');
   const fallbackImages: Record<string, string> = {
     'coaching.jpg': '/images/coaching.webp',
-    'player.jpg': '/images/player.webp',
+    'player.jpg': '/images/player-multisport.jpg',
     'autonomie.jpg': '/images/autonomie.webp',
   };
   const previewPath = fallbackImages[value] ?? value;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Images, Play, RefreshCw, X } from 'lucide-react';
-import { mediaUrl } from '../../shared/site-content.js';
+import { mediaUrl, playerMultisportImage } from '../../shared/site-content.js';
 import { requestJson } from '../../shared/api-client.js';
 
 type GalleryMedia = {
@@ -25,7 +25,17 @@ export default function GallerySection() {
     setLoading(true);
     setLoadError(false);
     requestJson<GalleryMedia[]>('/api/public/media')
-      .then((result: GalleryMedia[]) => setMedia(Array.isArray(result) ? result : []))
+      .then((result: GalleryMedia[]) =>
+        setMedia(
+          Array.isArray(result)
+            ? result.map((item) =>
+                item.service === 'YAA PLAYER' && item.url === '/images/player.webp'
+                  ? { ...item, ...playerMultisportImage }
+                  : item,
+              )
+            : [],
+        ),
+      )
       .catch(() => setLoadError(true))
       .finally(() => setLoading(false));
   }, [request]);

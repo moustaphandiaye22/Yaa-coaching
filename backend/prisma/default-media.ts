@@ -11,9 +11,9 @@ export const defaultMedia = [
   {
     kind: 'PHOTO' as const,
     service: 'YAA PLAYER',
-    url: '/images/player.webp',
-    alt: 'Illustration générée : un jeune footballeur échange avec un coach sur un terrain.',
-    caption: 'Illustration générée par IA : accompagner la progression du jeune joueur.',
+    url: '/images/player-multisport.jpg',
+    alt: 'Un coach échange avec trois jeunes sportifs pratiquant le tennis et le basket.',
+    caption: 'YAA PLAYER : un accompagnement pour les jeunes sportifs de toutes disciplines.',
     position: 1,
     published: true,
   },

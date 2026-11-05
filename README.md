@@ -95,7 +95,7 @@ L’administration permet de créer, désactiver, modifier le rôle et réinitia
 
 ## Images et vidéos
 
-Trois illustrations WebP générées sont fournies dans `frontend/public/images/` pour YAA COACHING, YAA PLAYER et YAA AUTONOMIE. Le seeder inscrit leurs références dans la table `Media` sans remplacer les médias déjà présents ; leur publication se gère ensuite dans l’administration. Les légendes indiquent qu’il s’agit d’illustrations et non de véritables séances. Les nouveaux téléversements restent stockés dans `MEDIA_STORAGE_DIR`. Aucune vidéo de départ n’est fournie.
+Les illustrations WebP générées pour YAA COACHING et YAA AUTONOMIE et la photo YAA PLAYER reprise du tunnel Systeme.io sont fournies dans `frontend/public/images/`. Le seeder inscrit leurs références dans la table `Media` sans remplacer les médias déjà présents ; leur publication se gère ensuite dans l’administration. Les nouveaux téléversements restent stockés dans `MEDIA_STORAGE_DIR`. Aucune vidéo de départ n’est fournie.
 
 ## Mise en production
 

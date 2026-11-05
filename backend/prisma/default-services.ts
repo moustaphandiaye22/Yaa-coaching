@@ -15,9 +15,9 @@ export const services = [
     zone: 'Vierzon et alentours',
     presentation:
       'Accompagnement physique et mental individualisé pour reprendre une activité, développer votre confiance et avancer dans votre quotidien.',
-    offerHighlight: '140 € les 2 séances',
+    offerHighlight: '55 € la séance',
     offerDetails:
-      ' (70 € par séance). Repère sur 3 mois : 6 séances, soit 420 €. Le rythme est défini ensemble.',
+      ' 1 à 2 séances par semaine sur 3 mois minimum, en présentiel, à distance ou en combinant les deux. Rythme défini ensemble selon vos besoins et vos disponibilités. Éventuels frais de déplacement précisés avant de commencer.',
     description:
       'Retrouver des possibilités d’action à votre rythme, sans mesurer votre valeur à vos performances. Sportif ou non, bénéficiez d’un accompagnement physique et mental adapté à vos capacités et à vos besoins.',
   },
@@ -25,8 +25,8 @@ export const services = [
     slug: 'player',
     name: 'YAA PLAYER',
     accent: 'ochre',
-    image: '/images/player.webp',
-    alt: 'Un jeune sportif échange avec un coach à son écoute après une séance.',
+    image: '/images/player-multisport.jpg',
+    alt: 'Un coach échange avec trois jeunes sportifs pratiquant le tennis et le basket.',
     link: 'Découvrir YAA PLAYER →',
     questionnaireSituations: ['Être accompagné dans mon parcours de jeune sportif'],
     type: 'JEUNES SPORTIFS · 9–18 ANS',
@@ -53,9 +53,9 @@ export const services = [
     zone: 'Vierzon et alentours',
     presentation:
       'Accompagnement personnalisé à domicile pour les personnes âgées ou en perte d’autonomie, à Vierzon et aux alentours.',
-    offerHighlight: 'Bouger · Stimuler · Rassurer · Créer du lien.',
+    offerHighlight: '45 € la séance d’une heure',
     offerDetails:
-      ' Parcours initial de 12 semaines, avec 2 visites de 45 à 60 minutes par semaine et un bilan initial et final. Proposition personnalisée après échange.',
+      ' 1 à 2 séances d’une heure par semaine sur 3 mois minimum, avec bilan initial et final. Activités et sorties utiles choisies avec la personne dans le cadre du parcours. Rythme, modalités et éventuels frais de déplacement précisés avant engagement.',
     description:
       'À domicile, un accompagnement pour stimuler, rassurer et garder le lien au quotidien.',
   },
