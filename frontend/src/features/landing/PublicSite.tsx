@@ -18,6 +18,7 @@ import ReviewsSection from '../reviews/ReviewsSection.js';
 import FaqSection from '../faq/FaqSection.js';
 import PlayerCoachSection from './PlayerCoachSection.js';
 import PlayerProgramSection from './PlayerProgramSection.js';
+import ServiceAreaMap from './ServiceAreaMap.js';
 import { mediaUrl, playerMultisportImage } from '../../shared/site-content.js';
 import { funnelLinkForService, funnelLinks } from '../../shared/funnel-links.js';
 import { usePublicSiteContent } from './usePublicSiteContent.js';
@@ -57,8 +58,6 @@ function PublicSite({
     questionnaire: 'Entretien découverte',
   };
   const pageTitle = pageTitles[page] ?? pageTitles.home;
-  const openStreetMapEmbedUrl =
-    'https://www.openstreetmap.org/export/embed.html?bbox=2.01%2C47.17%2C2.13%2C47.27&layer=mapnik&marker=47.221%2C2.069';
   const ServicesTitle = page === 'accompagnements' ? 'h1' : 'h2';
   const show = (...pages: string[]) => pages.includes(page);
   const notify = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -388,23 +387,7 @@ function PublicSite({
               )}
             </div>
             <div className="zones-list">
-              <div className="service-area-map">
-                <div className="service-area-map-heading">
-                  <b>Carte indicative du secteur</b>
-                  <a
-                    href="https://www.openstreetmap.org/?mlat=47.221&mlon=2.069#map=13/47.221/2.069"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Ouvrir OpenStreetMap <ArrowUpRight size={15} aria-hidden="true" />
-                  </a>
-                </div>
-                <iframe
-                  title="Carte OpenStreetMap de Vierzon et des alentours"
-                  src={openStreetMapEmbedUrl}
-                  loading="lazy"
-                />
-              </div>
+              <ServiceAreaMap />
             </div>
           </section>
         )}

@@ -6480,12 +6480,16 @@ textarea {
   font-weight: 600;
 }
 
-.service-area-map iframe {
+.service-area-map-canvas {
   display: block;
   width: 100%;
   height: clamp(240px, 30vw, 360px);
-  border: 0;
   border-top: 1px solid var(--yaa-line);
+}
+
+.service-area-map-canvas:focus-visible {
+  outline: 3px solid rgb(75 121 107 / 45%);
+  outline-offset: -3px;
 }
 
 .site-footer {
@@ -6612,7 +6616,7 @@ textarea {
     padding: 15px;
   }
 
-  .service-area-map iframe {
+  .service-area-map-canvas {
     height: 280px;
   }
 
